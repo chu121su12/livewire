@@ -15,6 +15,6 @@ class IncludeIdAsRootTagAttribute implements HydrationMiddleware
 
         $response->dom = $callable($response->dom, [
             'id' => $instance->id,
-        ]);
+        ], $instance);
     }
 }
