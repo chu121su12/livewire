@@ -10,41 +10,49 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\LivewireViewCompilerEngine;
-use Livewire\Connection\HttpConnectionHandler;
+use Livewire\Controllers\FileUploadHandler;
+use Livewire\Controllers\FilePreviewHandler;
+use Livewire\Controllers\HttpConnectionHandler;
 use Illuminate\Foundation\Testing\TestResponse;
+use Livewire\Controllers\LivewireJavaScriptAssets;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Testing\TestResponse as Laravel7TestResponse;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
-use Livewire\Commands\CpCommand;
-use Livewire\Commands\MvCommand;
-use Livewire\Commands\RmCommand;
-use Livewire\Commands\CopyCommand;
-use Livewire\Commands\MakeCommand;
-use Livewire\Commands\MoveCommand;
-use Livewire\Commands\StubsCommand;
-use Livewire\Commands\TouchCommand;
-use Livewire\Commands\DeleteCommand;
-use Livewire\Commands\ComponentParser;
-use Livewire\Commands\DiscoverCommand;
-use Livewire\Commands\MakeLivewireCommand;
-use Livewire\HydrationMiddleware\ForwardPrefetch;
-use Livewire\HydrationMiddleware\PersistErrorBag;
-use Livewire\HydrationMiddleware\UpdateQueryString;
-use Livewire\HydrationMiddleware\InterceptRedirects;
-use Livewire\HydrationMiddleware\CastPublicProperties;
-use Livewire\HydrationMiddleware\RegisterEmittedEvents;
-use Livewire\HydrationMiddleware\HydratePublicProperties;
-use Livewire\HydrationMiddleware\SecureHydrationWithChecksum;
-use Livewire\HydrationMiddleware\IncludeIdAsRootTagAttribute;
-use Livewire\HydrationMiddleware\RegisterEventsBeingListenedFor;
-use Livewire\HydrationMiddleware\HashPropertiesForDirtyDetection;
-use Livewire\HydrationMiddleware\HydratePreviouslyRenderedChildren;
-use Livewire\HydrationMiddleware\ClearFlashMessagesIfNotRedirectingAway;
-use Livewire\HydrationMiddleware\PrioritizeDataUpdatesBeforeActionCalls;
-use Livewire\HydrationMiddleware\HydrateEloquentModelsAsPublicProperties;
-use Livewire\HydrationMiddleware\PerformPublicPropertyFromDataBindingUpdates;
-use Livewire\HydrationMiddleware\HydratePropertiesWithCustomRuntimeHydrators;
+use Livewire\Commands\{
+    CpCommand,
+    MvCommand,
+    RmCommand,
+    CopyCommand,
+    MakeCommand,
+    MoveCommand,
+    StubsCommand,
+    TouchCommand,
+    DeleteCommand,
+    ComponentParser,
+    DiscoverCommand,
+    S3CleanupCommand,
+    MakeLivewireCommand
+};
+use Livewire\HydrationMiddleware\{
+    ForwardPrefetch,
+    PersistErrorBag,
+    UpdateQueryString,
+    InterceptRedirects,
+    CastPublicProperties,
+    RegisterEmittedEvents,
+    HydratePublicProperties,
+    SecureHydrationWithChecksum,
+    IncludeIdAsRootTagAttribute,
+    RegisterEventsBeingListenedFor,
+    HashPropertiesForDirtyDetection,
+    HydratePreviouslyRenderedChildren,
+    ClearFlashMessagesIfNotRedirectingAway,
+    PrioritizeDataUpdatesBeforeActionCalls,
+    HydrateEloquentModelsAsPublicProperties,
+    PerformPublicPropertyFromDataBindingUpdates,
+    HydratePropertiesWithCustomRuntimeHydrators
+};
 
 class LivewireServiceProvider extends ServiceProvider
 {
@@ -91,7 +99,7 @@ class LivewireServiceProvider extends ServiceProvider
 
         // We will generate a manifest file so we don't have to do the lookup every time.
         $defaultManifestPath = $this->app['livewire']->isOnVapor()
-            ? '/tmp/storage/bootstrap/cache/livewire-components.php'
+            ? '/livewire-tmp/storage/bootstrap/cache/livewire-components.php'
             : app()->bootstrapPath('cache/livewire-components.php');
 
         $this->app->singleton(LivewireComponentsFinder::class, function () use ($defaultManifestPath) {
@@ -122,6 +130,14 @@ class LivewireServiceProvider extends ServiceProvider
 
         RouteFacade::post('/livewire/message/{name}', HttpConnectionHandler::class)
             ->middleware(config('livewire.middleware_group', 'web'));
+
+        RouteFacade::post('/livewire/upload-file', [FileUploadHandler::class, 'handle'])
+            ->middleware(config('livewire.middleware_group', 'web'))
+            ->name('livewire.upload-file');
+
+        RouteFacade::get('/livewire/preview-file/{filename}', [FilePreviewHandler::class, 'handle'])
+            ->middleware(config('livewire.middleware_group', 'web'))
+            ->name('livewire.preview-file');
     }
 
     protected function registerCommands()
@@ -140,6 +156,7 @@ class LivewireServiceProvider extends ServiceProvider
             MvCommand::class,           // livewire:mv
             StubsCommand::class,        // livewire:stubs
             DiscoverCommand::class,     // livewire:discover
+            S3CleanupCommand::class,    // livewire:configure-s3-upload-cleanup
         ]);
     }
 
