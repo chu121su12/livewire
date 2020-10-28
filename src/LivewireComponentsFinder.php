@@ -4,7 +4,6 @@ namespace Livewire;
 
 use Exception;
 use ReflectionClass;
-use Illuminate\Support\Str;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -73,6 +72,12 @@ class LivewireComponentsFinder
                     Str::after($file->getPathname(), app_path().DIRECTORY_SEPARATOR)
                     // Str::after($file->getPathname(), app_path().'/')
                 );
+
+                return app()->getNamespace().
+                    str($file->getPathname())
+                        ->after(app_path().'/')
+                        ->replace(['/', '.php'], ['\\', ''])->__toString();
+
             })
             ->filter(function ($class) {
                 $class = cast_to_string($class);
