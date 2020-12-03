@@ -45,7 +45,9 @@ class ComponentParser
 
     public function relativeClassPath()
     {
-        return Str::replaceFirst(base_path().'/', '', $this->classPath());
+        $base = Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', app_path());
+
+        return Str::replaceFirst(base_path().DIRECTORY_SEPARATOR.$base.DIRECTORY_SEPARATOR, "{$base}/", $this->classPath());
     }
 
     public function classFile()
@@ -90,7 +92,7 @@ class ComponentParser
 
     public function relativeViewPath()
     {
-        return Str::replaceFirst(base_path().'/', '', $this->viewPath());
+        return Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', $this->viewPath());
     }
 
     public function viewFile()
