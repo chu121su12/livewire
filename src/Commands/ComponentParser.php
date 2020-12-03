@@ -49,6 +49,7 @@ class ComponentParser
         $base = Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', app_path());
 
         return Str::replaceFirst(base_path().DIRECTORY_SEPARATOR.$base.DIRECTORY_SEPARATOR, "{$base}/", $this->classPath());
+        // return Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', $this->classPath());
     }
 
     public function classFile()

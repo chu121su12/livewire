@@ -41,7 +41,7 @@ class RouterMacros
                     'componentParameters' => $reflected->hasMethod('mount')
                         ? (new PretendClassMethodIsControllerMethod($reflected->getMethod('mount'), $this))->retrieveBindings()
                         : [],
-                ]);
+                ])->with($this->current()->layoutParamsFromLivewire ?? []);
             });
         };
     }
