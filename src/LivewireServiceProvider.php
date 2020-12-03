@@ -28,6 +28,7 @@ class LivewireServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerRoutes();
+        $this->registerViews();
         $this->registerCommands();
         $this->registerRouterMacros();
         $this->registerBladeDirectives();
@@ -35,6 +36,20 @@ class LivewireServiceProvider extends ServiceProvider
 
     public function registerRoutes()
     {
+        RouteFacade::get('/livewire/livewire.js', function () {
+            $file = __DIR__ . '/../dist/livewire.js';
+            $lastModified = filemtime($file);
+            $contents = file_get_contents($file);
+
+            // These headers will enable browsers to cache this asset.
+            return response($contents)
+                ->withHeaders([
+                    'Content-Type' => 'application/javascript; charset=utf-8',
+                    'Cache-Control' => 'public, max-age=3600',
+                    'Last-Modified' => gmdate("D, d M Y H:i:s", $lastModified)." GMT",
+                ]);
+        });
+
         // Don't register route for non-Livewire calls.
         if (request()->headers->get('X-Livewire') == true) {
             // This should be the middleware stack of the original request.
@@ -50,7 +65,11 @@ class LivewireServiceProvider extends ServiceProvider
                 return response(200);
             })->middleware('web');
         }
+    }
 
+    public function registerViews()
+    {
+        $this->loadViewsFrom(__DIR__.DIRECTORY_SEPARATOR.'views', 'livewire');
     }
 
     public function registerCommands()
@@ -70,6 +89,10 @@ class LivewireServiceProvider extends ServiceProvider
 
     public function registerBladeDirectives()
     {
+        Blade::directive('livewireAssets', function ($expression) {
+            return '{!! Livewire::assets('.$expression.') !!}';
+        });
+
         Blade::directive('livewire', [LivewireBladeDirectives::class, 'livewire']);
     }
 }

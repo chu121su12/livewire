@@ -16,6 +16,11 @@ trait MakesCallsToComponent
         return $this;
     }
 
+    public function call($method, ...$parameters)
+    {
+        return $this->runAction($method, ...$parameters);
+    }
+
     public function runAction($method, ...$parameters)
     {
         $this->sendMessage('callMethod', [
@@ -25,6 +30,11 @@ trait MakesCallsToComponent
         ]);
 
         return $this;
+    }
+
+    public function set($name, $value)
+    {
+        return $this->updateProperty($name, $value);
     }
 
     public function updateProperty($name, $value)

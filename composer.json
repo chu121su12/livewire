@@ -50,6 +50,7 @@
     },
     "require-dev": {
         "laravel/framework": "dev-merge",
-        "phpunit/phpunit": "^5.7"
+        "phpunit/phpunit": "^5.7",
+        "psy/psysh": "@stable"
     }
 }
