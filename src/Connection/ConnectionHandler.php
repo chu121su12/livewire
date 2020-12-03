@@ -3,42 +3,65 @@
 namespace Livewire\Connection;
 
 use Illuminate\Validation\ValidationException;
+use Livewire\TinyHtmlMinifier;
+use Livewire\ResponsePayload;
 
 abstract class ConnectionHandler
 {
-    public function handle($event, $data, $serialized)
+    public function handle($payload)
     {
-        $instance = decrypt($payload['serialized']);
+        $instance = ComponentHydrator::hydrate($payload['name'], $payload['id'], $payload['data'], $payload['checksum']);
+
+        $instance->setPreviouslyRenderedChildren($payload['children']);
+        $instance->hashPropertiesForDirtyDetection();
 
         try {
-            $this->processEvent($event, $instance, $data);
+            foreach ($payload['actionQueue'] as $action) {
+                $this->processMessage($action['type'], $action['payload'], $instance);
+            }
         } catch (ValidationException $e) {
             $errors = $e->validator->errors();
         }
 
-        return [
-            'id' => $instance->id,
-            'dom' => $instance->output(isset($errors) ? $errors : null),
-            'dirtyInputs' => $instance->dirtyInputs(),
-            'serialized' => encrypt($instance),
-        ];
+        if ($instance->redirectTo) {
+            return ['redirectTo' => $instance->redirectTo];
+        }
+
+        $dom = $instance->output($errors ?? null);
+        $data = ComponentHydrator::dehydrate($instance);
+        $listeningFor = $instance->getEventsBeingListenedFor();
+        $eventQueue = $instance->getEventQueue();
+
+        return new ResponsePayload([
+            // The "id" is here only as a way of relating the request to the response in js, no other reason.
+            'id' => $payload['id'],
+            // @todo - this breaks svgs (because of self-closing tags)
+            // 'dom' => $minifier->minify($dom),
+            'dom' => $dom,
+            'dirtyInputs' => $instance->getDirtyProperties(),
+            'children' => $instance->getRenderedChildren(),
+            'eventQueue' => $eventQueue,
+            'listeningFor' => $listeningFor,
+            'data' => $data,
+        ]);
     }
 
-    public function processEvent($event, $instance, $data)
+    public function processMessage($type, $data, $instance)
     {
-        $instance->beforeUpdate();
+        $instance->updating();
 
-        switch ($event) {
-            case 'refresh':
-                break;
+        switch ($type) {
             case 'syncInput':
                 $instance->syncInput($data['name'], $data['value']);
                 break;
-            case 'fireMethod':
-                $instance->{$data['method']}(...$data['params']);
+            case 'callMethod':
+                $instance->callMethod($data['method'], $data['params']);
+                break;
+            case 'fireEvent':
+                $instance->fireEvent($data['event'], $data['params']);
                 break;
             default:
-                throw new \Exception('Unrecongnized event: ' . $event);
+                throw new \Exception('Unrecongnized message type: ' . $type);
                 break;
         }
 

@@ -9,9 +9,14 @@ class HttpConnectionHandler extends ConnectionHandler
     public function __invoke()
     {
         return $this->handle(
-            request('event'),
-            request('data'),
-            request('serialized')
+            request([
+                'actionQueue',
+                'name',
+                'children',
+                'data',
+                'id',
+                'checksum',
+            ])
         );
     }
 }

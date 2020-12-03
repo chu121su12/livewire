@@ -6,14 +6,38 @@ use Illuminate\Support\Str;
 
 trait ReceivesEvents
 {
-    public function syncInput($name, $value)
+    protected $eventQueue = [];
+
+    public function emit($event, ...$params)
     {
-        if (method_exists($this, 'onSync' . Str::studly($name))) {
-            $this->{'onSync' . Str::studly($name)}($value);
+        $this->eventQueue[] = [
+            'event' => $event,
+            'params' => $params,
+        ];
+    }
+
+    public function getEventQueue()
+    {
+        return $this->eventQueue;
+    }
+
+    protected function getEventsAndHandlers()
+    {
+        if (method_exists($this, 'listeners')) {
+            return $this->listeners();
         }
+        return $this->listeners ?? [];
+    }
 
-        $this->removeFromDirtyPropertiesList($name);
+    public function getEventsBeingListenedFor()
+    {
+        return array_keys($this->getEventsAndHandlers());
+    }
 
-        $this->{$name} = $value;
+    public function fireEvent($event, $params)
+    {
+        $method = $this->getEventsAndHandlers()[$event];
+
+        $this->callMethod($method, $params);
     }
 }

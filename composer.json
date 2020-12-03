@@ -15,12 +15,7 @@
         }
     ],
     "require": {
-        "php": ">=5.6.40",
-        "cboden/ratchet": "^0.4.1",
-        "symfony/dom-crawler": "^3.4",
-        "opis/closure": "^3.1",
-        "yosymfony/resource-watcher": "^2.0",
-        "symfony/process": "^3.4"
+        "php": ">=5.6.40"
     },
     "extra": {
         "laravel": {
