@@ -33,7 +33,7 @@ class DuskCommand extends Command
 
         $line = collect($this->e->getTrace())
             ->first(function ($entry) use ($file) {
-                return ($entry['file'] ?? '') === $file;
+                return (isset($entry['file']) ? $entry['file'] : '') === $file;
             })['line'];
 
         $info = [

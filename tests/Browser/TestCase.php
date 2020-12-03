@@ -24,6 +24,19 @@ if (! class_exists('Orchestra\Testbench\Dusk\TestCase')) {
     return;
 }
 
+class TestCase_registerMacros_waitForLivewire {
+                public function __construct($browser, $id) { $this->browser = $browser; $this->id = $id; }
+
+                public function __call($method, $params)
+                {
+                    return tap($this->browser->{$method}(...$params), function ($browser) {
+                        $browser->waitUsing(5, 25, function () use ($browser) {
+                            return $browser->driver->executeScript("return window.duskIsWaitingForLivewireRequest{$this->id} === undefined");
+                        }, 'Livewire request was never triggered');
+                    });
+                }
+            };
+
 class TestCase extends BaseTestCase
 {
     public function __duskable__() { }
@@ -257,18 +270,7 @@ class TestCase extends BaseTestCase
             }
 
             // If no callback is passed, make ->waitForLivewire a higher-order method.
-            return new class($this, $id) {
-                public function __construct($browser, $id) { $this->browser = $browser; $this->id = $id; }
-
-                public function __call($method, $params)
-                {
-                    return tap($this->browser->{$method}(...$params), function ($browser) {
-                        $browser->waitUsing(5, 25, function () use ($browser) {
-                            return $browser->driver->executeScript("return window.duskIsWaitingForLivewireRequest{$this->id} === undefined");
-                        }, 'Livewire request was never triggered');
-                    });
-                }
-            };
+            return new TestCase_registerMacros_waitForLivewire($this, $id);
         });
 
         Browser::macro('online', function () {
@@ -292,7 +294,7 @@ class TestCase extends BaseTestCase
         });
     }
 
-    protected function driver(): RemoteWebDriver
+    protected function driver()
     {
         $options = DuskOptions::getChromeOptions();
 

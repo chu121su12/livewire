@@ -18,7 +18,7 @@ class HydratePublicProperties implements HydrationMiddleware
 
     public static function hydrate($instance, $request)
     {
-        $publicProperties = $request->memo['data'] ?? [];
+        $publicProperties = isset($request->memo['data']) ? $request->memo['data'] : [];
 
         $dates = data_get($request, 'memo.dataMeta.dates', []);
         $collections = data_get($request, 'memo.dataMeta.collections', []);
@@ -90,7 +90,7 @@ class HydratePublicProperties implements HydrationMiddleware
                     $response->memo['dataMeta']['dates'][$key] = 'native';
                 }
 
-                data_set($response, 'memo.data.'.$key, $value->format(\DateTimeInterface::ISO8601));
+                data_set($response, 'memo.data.'.$key, $value->format(\Carbon\Patch\DateTimeConstants::ISO8601));
             } else {
                 throw new PublicPropertyTypeNotAllowedException($instance::getName(), $key, $value);
             }

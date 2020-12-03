@@ -32,7 +32,7 @@ abstract class Component
 
     public function __construct($id = null)
     {
-        $this->id = $id ?? Str::random(20);
+        $this->id = isset($id) ? $id : Str::random(20);
 
         $this->ensureIdPropertyIsntOverridden();
 
@@ -49,12 +49,12 @@ abstract class Component
             ->mount($componentParams)
             ->renderToView();
 
-        $layoutType = $this->initialLayoutConfiguration['type'] ?? 'component';
+        $layoutType = isset($this->initialLayoutConfiguration['type']) ? $this->initialLayoutConfiguration['type'] : 'component';
 
         return app('view')->file(__DIR__."/Macros/livewire-view-{$layoutType}.blade.php", [
-            'view' => $this->initialLayoutConfiguration['view'] ?? 'layouts.app',
-            'params' => $this->initialLayoutConfiguration['params'] ?? [],
-            'slotOrSection' => $this->initialLayoutConfiguration['slotOrSection'] ?? [
+            'view' => isset($this->initialLayoutConfiguration['view']) ? $this->initialLayoutConfiguration['view'] : 'layouts.app',
+            'params' => isset($this->initialLayoutConfiguration['params']) ? $this->initialLayoutConfiguration['params'] : [],
+            'slotOrSection' => isset($this->initialLayoutConfiguration['slotOrSection']) ? $this->initialLayoutConfiguration['slotOrSection'] : [
                 'extends' => 'content', 'component' => 'default',
             ][$layoutType],
             'manager' => $manager,

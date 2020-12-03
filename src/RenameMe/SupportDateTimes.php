@@ -16,7 +16,7 @@ class SupportDateTimes
         Livewire::listen('property.dehydrate', function ($name, $value, $component, $response) {
             if (! $value instanceof \DateTime) return;
 
-            $component->{$name} = $value->format(\DateTimeInterface::ISO8601);
+            $component->{$name} = $value->format(\Carbon\Patch\DateTimeConstants::ISO8601);
 
             data_fill($response->memo, 'dataMeta.dates', []);
 

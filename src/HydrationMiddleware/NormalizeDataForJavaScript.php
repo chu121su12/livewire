@@ -10,6 +10,8 @@ abstract class NormalizeDataForJavaScript
             return $value;
         }
 
+        if (! version_compare(PHP_VERSION, '7.0.0', '<')) {
+
         $normalizedData = $value;
 
         // Make sure string keys are last (but not ordered) and numeric keys are ordered.
@@ -21,6 +23,25 @@ abstract class NormalizeDataForJavaScript
 
             if (! is_numeric($a)) return 1;
         });
+
+        } else {
+            $normalizedData = [];
+
+            foreach ($value as $key => $val) {
+                if (is_numeric($key)) {
+                    $normalizedData[$key] = $val;
+                }
+            }
+
+
+            ksort($normalizedData);
+
+            foreach ($value as $key => $val) {
+                if (! is_numeric($key)) {
+                    $normalizedData[$key] = $val;
+                }
+            }
+        }
 
         return array_map(function ($value) {
             return static::reindexArrayWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value);

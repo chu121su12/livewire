@@ -6,10 +6,11 @@ use Illuminate\Support\Facades\File;
 use Livewire\LivewireServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase as BaseTestCase;
+use Tests\Patch\PhpUnitAssertBackport;
 
 class TestCase extends BaseTestCase
 {
-    use Patch\PhpUnitAssertBackport;
+    use PhpUnitAssertBackport;
 
     public function setUp()
     {

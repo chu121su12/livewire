@@ -4,7 +4,7 @@ namespace Livewire\Macros;
 
 class ViewMacros
 {
-    public function extends()
+    public function extends_()
     {
         return function ($view, $params = []) {
             $this->livewireLayout = [

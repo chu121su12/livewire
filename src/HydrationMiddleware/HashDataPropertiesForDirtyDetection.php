@@ -27,7 +27,7 @@ class HashDataPropertiesForDirtyDetection implements HydrationMiddleware
     {
         $data = data_get($response, 'memo.data', []);
 
-        $dirtyProps = collect(static::$propertyHashesByComponentId[$instance->id] ?? [])
+        $dirtyProps = collect(isset(static::$propertyHashesByComponentId[$instance->id]) ? static::$propertyHashesByComponentId[$instance->id] : [])
             ->filter(function ($hash, $key) use ($data) {
                 // Only return the propertyHashes/props that have changed.
                 return static::hash(data_get($data, $key)) !== $hash;

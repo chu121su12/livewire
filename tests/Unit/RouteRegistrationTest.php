@@ -25,7 +25,7 @@ class ComponentForRouteRegistration extends Component
 
     public function render()
     {
-        return view('show-name')->extends('layouts.app-with-bar', [
+        return view('show-name')->extends_('layouts.app-with-bar', [
             'bar' => 'baz',
         ]);
     }

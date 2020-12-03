@@ -30,25 +30,29 @@ class Response
 
     public function embedThyselfInHtml()
     {
-        if (! $html = $this->effects['html'] ?? null) return;
+        if (! ($html = isset($this->effects['html']) ? $this->effects['html'] : null)) return;
 
-        $this->effects['html'] = (new AddAttributesToRootTagOfHtml)($html, [
+        $callable = new AddAttributesToRootTagOfHtml;
+
+        $this->effects['html'] = $callable($html, [
             'initial-data' => $this->toArrayWithoutHtml(),
         ]);
     }
 
     public function embedIdInHtml()
     {
-        if (! $html = $this->effects['html'] ?? null) return;
+        if (! ($html = isset($this->effects['html']) ? $this->effects['html'] : null)) return;
 
-        $this->effects['html'] = (new AddAttributesToRootTagOfHtml)($html, [
+        $callable = new AddAttributesToRootTagOfHtml;
+
+        $this->effects['html'] = $callable($html, [
             'id' => $this->fingerprint['id'],
         ]);
     }
 
     public function html()
     {
-        return $this->effects['html'] ?? null;
+        return isset($this->effects['html']) ? $this->effects['html'] : null;
     }
 
     public function toArrayWithoutHtml()

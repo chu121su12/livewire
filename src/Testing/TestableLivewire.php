@@ -74,11 +74,11 @@ class TestableLivewire
         // We still want to be able to make assertions on
         // the currently rendered DOM. So we will store
         // the last known one.
-        if ($output['effects']['html'] ?? false) {
+        if (isset($output['effects']) && isset($output['effects']['html']) ? $output['effects']['html'] : false) {
             $this->lastRenderedDom = $output['effects']['html'];
         }
 
-        if ($output['fingerprint'] ?? false) {
+        if (isset($output['fingerprint']) ? $output['fingerprint'] : false) {
             $this->payload['fingerprint'] = $output['fingerprint'];
         }
 

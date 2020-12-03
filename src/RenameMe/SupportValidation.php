@@ -16,7 +16,7 @@ class SupportValidation
 
         Livewire::listen('component.hydrate', function ($component, $request) {
             $component->setErrorBag(
-                $request->memo['errors'] ?? []
+                isset($request->memo['errors']) ? $request->memo['errors'] : []
             );
         });
     }

@@ -38,7 +38,7 @@ class DataBindingTest extends TestCase
         $component->updateProperty('foo', 'bar');
 
         $this->assertEquals('bar', $component->foo);
-        $this->assertEmpty($component->payload['effects']['dirty'] ?? []);
+        $this->assertEmpty(isset($component->payload['effects']) && isset($component->payload['effects']['dirty']) ? $component->payload['effects']['dirty'] : []);
 
         $component->runAction('changeFoo', 'baz');
 
@@ -54,7 +54,7 @@ class DataBindingTest extends TestCase
         $component->updateProperty('arrayProperty.1', 'baz');
 
         $this->assertEquals(['foo', 'baz'], $component->arrayProperty);
-        $this->assertEmpty($component->payload['effects']['dirty'] ?? []);
+        $this->assertEmpty(isset($component->payload['effects']) && isset($component->payload['effects']['dirty']) ? $component->payload['effects']['dirty'] : []);
 
         $component->runAction('changeArrayPropertyOne', 'bar');
 
