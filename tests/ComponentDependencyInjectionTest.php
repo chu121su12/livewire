@@ -68,14 +68,18 @@ class ComponentWithDependencyInjection extends Component
         $this->bar = $bar;
     }
 
-    public function primitive(int $foo, $bar = '')
+    public function primitive($foo, $bar = '')
     {
+        $foo = cast_to_int($foo);
+
         $this->foo = $foo;
         $this->bar = $bar;
     }
 
-    public function mixed(UrlGenerator $generator, int $id)
+    public function mixed(UrlGenerator $generator, $id)
     {
+        $id = cast_to_int($id);
+
         $this->foo = $generator->to('/some-url', $id);
         $this->bar = $id;
     }

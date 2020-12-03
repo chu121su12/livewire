@@ -33,7 +33,8 @@ namespace Tests;
 use Livewire\Component;
 class UninitializedPublicTypedPropertyComponent extends Component
 {
-    public string $message;
+    // public string $message;
+    public $message;
 
     public function render()
     {
@@ -59,7 +60,8 @@ namespace Tests;
 use Livewire\Component;
 class InitializedPublicTypedPropertyComponent extends Component
 {
-    public string $message = 'Typed Properties FTW!';
+    // public string $message = 'Typed Properties FTW!';
+    public $message = 'Typed Properties FTW!';
 
     public function render()
     {
