@@ -132,7 +132,7 @@ abstract class Component
 
         if (! version_compare(PHP_VERSION, '7.0.0', '<')) {
 
-        $normalizedData = $data;
+        $normalizedData = $value;
 
         // Make sure string keys are last (but not ordered). JSON.parse will do this.
         uksort($normalizedData, function ($a, $b) {
@@ -151,17 +151,17 @@ abstract class Component
         } else {
             $normalizedData = [];
 
-            foreach ($data as $key => $value) {
+            foreach ($value as $key => $val) {
                 if (is_numeric($key)) {
-                    $normalizedData[$key] = $value;
+                    $normalizedData[$key] = $val;
                 }
             }
 
             ksort($normalizedData);
 
-            foreach ($data as $key => $value) {
+            foreach ($value as $key => $val) {
                 if (! is_numeric($key)) {
-                    $normalizedData[$key] = $value;
+                    $normalizedData[$key] = $val;
                 }
             }
 
