@@ -108,11 +108,15 @@ abstract class Component
         throw_unless($view instanceof View,
             new \Exception('"render" method on ['.get_class($this).'] must return instance of ['.View::class.']'));
 
+        $viewData = $errors ? $view->getData() : [];
+
         $this->setErrorBag(
-            $errorBag = $errors ?: ($view->getData()['errors'] ?? $this->getErrorBag())
+            $errorBag = $errors ?: (isset($viewData['errors']) ? $viewData['errors'] : $this->getErrorBag())
         );
 
-        $previouslySharedErrors = app('view')->getShared()['errors'] ?? new ViewErrorBag;
+        $viewShared = app('view')->getShared();
+
+        $previouslySharedErrors = isset($viewShared['errors']) ? $viewShared['errors'] : new ViewErrorBag;
 
         $errors = (new ViewErrorBag)->put('default', $errorBag);
 
