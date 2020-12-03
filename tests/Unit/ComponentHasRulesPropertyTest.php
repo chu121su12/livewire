@@ -116,7 +116,8 @@ class ComponentWithRulesPropertyAndModelWithUniquenessValidation extends Compone
     public function save()
     {
         // Sorry about this chunk of ridiculousness. It's Sushi's fault.
-        $connection = $this->foo::resolveConnection();
+        $fooProperty = $this->foo;
+        $connection = $fooProperty::resolveConnection();
         $db = app('db');
         $prybar = new ObjectPrybar($db);
         $connections = $prybar->getProperty('connections');

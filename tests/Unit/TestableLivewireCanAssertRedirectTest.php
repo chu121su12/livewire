@@ -33,7 +33,13 @@ class TestableLivewireCanAssertRedirectTest extends TestCase
     {
         $component = Livewire::test(RedirectComponent::class);
 
-        $this->expectException(\PHPUnit\Framework\AssertionFailedError::class);
+        if (!class_exists('Illuminate\Tests\Foundation\AssertionFailedError')) {
+            if (class_exists('PHPUnit_Framework_AssertionFailedError')) {
+                $this->expectException(\PHPUnit_Framework_AssertionFailedError::class);
+            } else {
+                $this->expectException(\PHPUnit\Framework\AssertionFailedError::class);
+            }
+        }
 
         $component->assertRedirect();
     }
