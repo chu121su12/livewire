@@ -93,10 +93,10 @@ class GenerateSignedUploadUrl
 
         if (! isset($_ENV['AWS_LAMBDA_FUNCTION_VERSION'])) {
             $config['credentials'] = array_filter([
-                'key' => $_ENV['AWS_ACCESS_KEY_ID'] ?? null,
-                'secret' => $_ENV['AWS_SECRET_ACCESS_KEY'] ?? null,
-                'token' => $_ENV['AWS_SESSION_TOKEN'] ?? null,
-                'url' => $_ENV['AWS_URL'] ?? null,
+                'key' => isset($_ENV['AWS_ACCESS_KEY_ID']) ? $_ENV['AWS_ACCESS_KEY_ID'] : null,
+                'secret' => isset($_ENV['AWS_SECRET_ACCESS_KEY']) ? $_ENV['AWS_SECRET_ACCESS_KEY'] : null,
+                'token' => isset($_ENV['AWS_SESSION_TOKEN']) ? $_ENV['AWS_SESSION_TOKEN'] : null,
+                'url' => isset($_ENV['AWS_URL']) ? $_ENV['AWS_URL'] : null,
             ]);
         }
 

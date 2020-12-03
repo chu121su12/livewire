@@ -35,7 +35,7 @@ class TemporarilyUploadedFile extends UploadedFile
     {
         if (app()->environment('testing') && str::contains($this->getfilename(), '-size:')) {
             // This head/explode/last/explode nonsense is the equivelant of Str::between().
-            [$beginning, $end] = ['-size:', '.'];
+            list($beginning, $end) = ['-size:', '.'];
             return (int) head(explode($end, last(explode($beginning, $this->getFilename()))));
         }
 
