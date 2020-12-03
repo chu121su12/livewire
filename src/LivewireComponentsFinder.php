@@ -78,7 +78,6 @@ class LivewireComponentsFinder
                     str($file->getPathname())
                         ->after(app_path().'/')
                         ->replace(['/', '.php'], ['\\', ''])->__toString();
-
             })
             ->filter(function ($class) {
                 $class = cast_to_string($class);

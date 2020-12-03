@@ -10,6 +10,7 @@ class LivewireManager
 {
     protected $listeners = [];
     protected $componentAliases = [];
+    protected $queryParamsForTesting = [];
 
     public static $isLivewireRequestTestingOverride;
 
@@ -93,7 +94,7 @@ class LivewireManager
 
     public function test($name, $params = [])
     {
-        return new TestableLivewire($name, $params);
+        return new TestableLivewire($name, $params, $this->queryParamsForTesting);
     }
 
     public function visit($browser, $class, $queryString = '')
@@ -152,7 +153,7 @@ class LivewireManager
     {
         return <<<HTML
 <style>
-    [wire\:loading], [wire\:loading\.delay] {
+    [wire\:loading], [wire\:loading\.delay], [wire\:loading\.inline-block], [wire\:loading\.inline], [wire\:loading\.block], [wire\:loading\.flex], [wire\:loading\.table], [wire\:loading\.grid] {
         display: none;
     }
 
@@ -195,7 +196,7 @@ HTML;
         $fullAssetPath = "{$appUrl}/livewire{$versionedFileName}";
         $assetWarning = null;
 
-        $nonce = isset($options['nonce']) ? " nonce=\"{$options['nonce']}\"" : '';
+        $nonce = isset($options['nonce']) ? "nonce=\"{$options['nonce']}\"" : '';
 
         // Use static assets if they have been published
         if (file_exists(public_path('vendor/livewire/manifest.json'))) {
@@ -206,7 +207,7 @@ HTML;
 
             if ($manifest !== $publishedManifest) {
                 $assetWarning = <<<'HTML'
-<script{$nonce}>
+<script {$nonce}>
     console.warn("Livewire: The published Livewire assets are out of date\n See: https://laravel-livewire.com/docs/installation/")
 </script>
 HTML;
@@ -233,8 +234,8 @@ HTML;
     if (window.Alpine) {
         /* Defer showing the warning so it doesn't get buried under downstream errors. */
         document.addEventListener("DOMContentLoaded", function () {
-            setTimeout(() => {
-                console.warn(`Livewire: It looks like AlpineJS has already been loaded. Make sure Livewire\'s scripts are loaded before Alpine.\n\n Reference docs for more info: http://laravel-livewire.com/docs/alpine-js`)
+            setTimeout(function() {
+                console.warn("Livewire: It looks like AlpineJS has already been loaded. Make sure Livewire\'s scripts are loaded before Alpine.\\n\\n Reference docs for more info: http://laravel-livewire.com/docs/alpine-js")
             })
         });
     }
@@ -289,5 +290,12 @@ HTML;
     public function isOnVapor()
     {
         return (isset($_ENV['SERVER_SOFTWARE']) ? $_ENV['SERVER_SOFTWARE'] : null) === 'vapor';
+    }
+
+    public function withQueryParams($queryParams)
+    {
+        $this->queryParamsForTesting = $queryParams;
+
+        return $this;
     }
 }
