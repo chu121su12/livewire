@@ -18,7 +18,7 @@ abstract class ConnectionHandler
 
         return [
             'id' => $instance->id,
-            'dom' => $instance->output($errors ?? null),
+            'dom' => $instance->output(isset($errors) ? $errors : null),
             'dirtyInputs' => $instance->dirtyInputs(),
             'serialized' => encrypt($instance),
         ];

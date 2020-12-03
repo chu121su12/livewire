@@ -3,6 +3,7 @@
 namespace Livewire;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class LivewireManager
 {
@@ -24,7 +25,7 @@ class LivewireManager
             new \Exception('Livewire component not registered: [' . $name . ']')
         );
 
-        return new $this->componentsByName[$name](str_random(20), $this->prefix);
+        return new $this->componentsByName[$name](Str::random(20), $this->prefix);
     }
 
     public function test($name)
