@@ -117,6 +117,10 @@ class ImplicitlyBoundMethod extends BoundMethod
 
     public static function implementsInterface($parameter)
     {
+        if (\version_compare(\PHP_VERSION, '7.9', '<=')) {
+            return backport_reflection_parameter_get_class($parameter)->implementsInterface(ImplicitlyBindable::class);
+        }
+
         return (new ReflectionClass($parameter->getType()->getName()))->implementsInterface(ImplicitlyBindable::class);
     }
 }
