@@ -118,9 +118,11 @@ trait InteractsWithProperties
         return head(explode('.', $subject));
     }
 
-    public function afterFirstDot($subject) : string
+    public function afterFirstDot($subject) //// string
     {
-        return str($subject)->after('.');
+        return cast_to_string(
+            str($subject)->after('.')
+        );
     }
 
     public function propertyIsPublicAndNotDefinedOnBaseClass($propertyName)

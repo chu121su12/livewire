@@ -49,7 +49,7 @@ class ComponentParser
             ->implode('/');
     }
 
-    public function relativeClassPath() : string
+    public function relativeClassPath() //// : string
     {
         $base = Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', app_path());
 
@@ -108,7 +108,7 @@ class ComponentParser
             ->implode('/');
     }
 
-    public function relativeViewPath() : string
+    public function relativeViewPath() //// string
     {
         return Str::replaceFirst(base_path().DIRECTORY_SEPARATOR, '', $this->viewPath());
         // return str($this->viewPath())->replaceFirst(base_path().'/', '');

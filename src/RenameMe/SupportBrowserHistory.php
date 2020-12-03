@@ -118,7 +118,7 @@ class SupportBrowserHistory
         return $refererQueryString;
     }
 
-    protected function buildPathFromReferer($referer, $queryParams) : string
+    protected function buildPathFromReferer($referer, $queryParams) //// string
     {
         return str($referer)->before('?').$this->stringifyQueryParams($queryParams);
     }

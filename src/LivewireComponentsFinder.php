@@ -6,6 +6,7 @@ use Exception;
 use ReflectionClass;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Finder\SplFileInfo;
+use Illuminate\Support\Str;
 
 class LivewireComponentsFinder
 {
