@@ -48,6 +48,9 @@
         }
     },
     "extra": {
+        "branch-alias": {
+            "dev-merge": "dev"
+        },
         "laravel": {
             "providers": [
                 "Livewire\\LivewireServiceProvider"
@@ -62,6 +65,7 @@
     "config": {
         "platform": {
             "php": "5.6.40"
-        }
+        },
+        "sort-packages": true
     }
 }
