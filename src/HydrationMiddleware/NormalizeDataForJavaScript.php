@@ -26,7 +26,8 @@ abstract class NormalizeDataForJavaScript
             return ! is_numeric($key);
         }, ARRAY_FILTER_USE_KEY);
 
-        $normalizedData = array_merge($itemsWithNumericKeys, $itemsWithStringKeys);
+        //array_merge will reindex in some cases so we stick to array_replace
+        $normalizedData = array_replace($itemsWithNumericKeys, $itemsWithStringKeys);
 
         } else {
             $normalizedData = [];
