@@ -34,12 +34,14 @@ trait ValidatesInput
 
     public function resetErrorBag($field = null)
     {
-        if (is_null($field)) {
-            $this->errorBag = new MessageBag;
+        $fields = (array) $field;
+
+        if (empty($fields)) {
+            return $this->errorBag = new MessageBag;
         }
 
         $this->setErrorBag(
-            Arr::except($this->getErrorBag()->toArray(), $field)
+            $this->errorBagExcept($fields)
         );
     }
 
@@ -55,7 +57,17 @@ trait ValidatesInput
 
     public function errorBagExcept($field)
     {
-        return new MessageBag(Arr::except($this->getErrorBag()->toArray(), $field));
+        $fields = (array) $field;
+
+        return new MessageBag(
+            collect($this->getErrorBag())
+                ->reject(function ($messages, $messageKey) use ($fields) {
+                    return collect($fields)->some(function ($field) use ($messageKey) {
+                        return Str::is($field, $messageKey);
+                    });
+                })
+                ->toArray()
+        );
     }
 
     protected function getRules()
@@ -106,29 +118,27 @@ trait ValidatesInput
 
         $this->shortenModelAttributes($data, $rules, $validator);
 
-        $validator->validate();
+        $validatedData = $validator->validate();
 
         $this->resetErrorBag();
 
-        return $data;
+        return $validatedData;
     }
 
     public function validateOnly($field, $rules = null, $messages = [], $attributes = [])
     {
         list($rules, $messages) = $this->providedOrGlobalRulesAndMessages($rules, $messages);
 
-        // If the field is "items.0.foo", we should apply the validation rule for "items.*.foo".
+        // If the field is "items.0.foo", validation rules for "items.*.foo", "items.*", etc. are applied.
         $rulesForField = collect($rules)->filter(function ($rule, $fullFieldKey) use ($field) {
             return Str::is($fullFieldKey, $field);
         })->toArray();
 
+        $ruleKeysForField = array_keys($rulesForField);
+
         $data = $this->prepareForValidation(
-            $this->getDataForValidation($rulesForField)
+            $this->getDataForValidation($rules)
         );
-
-        $propertyName = $this->beforeFirstDot($field);
-
-        $data[$propertyName] = $this->getPropertyValue($propertyName);
 
         $validator = Validator::make($data, $rulesForField, $messages, $attributes);
 
@@ -143,14 +153,14 @@ trait ValidatesInput
             $target->setProperty(
                 'messages',
                 $messages->merge(
-                    $this->errorBagExcept($field)
+                    $this->errorBagExcept($ruleKeysForField)
                 )
             );
 
             throw $e;
         }
 
-        $this->resetErrorBag($field);
+        $this->resetErrorBag($ruleKeysForField);
 
         return $result;
     }
@@ -186,15 +196,14 @@ trait ValidatesInput
     {
         $properties = $this->getPublicPropertiesDefinedBySubClass();
 
-        return collect($rules)->keys()
-            ->mapWithKeys(function ($ruleKey) use ($properties) {
+        collect($rules)->keys()
+            ->each(function ($ruleKey) use ($properties) {
                 $propertyName = $this->beforeFirstDot($ruleKey);
 
                 throw_unless(array_key_exists($propertyName, $properties), new \Exception('No property found for validation: ['.$ruleKey.']'));
+            });
 
-                return [$propertyName => $properties[$propertyName]];
-            })
-            ->all();
+        return $properties;
     }
 
     protected function prepareForValidation($attributes)
