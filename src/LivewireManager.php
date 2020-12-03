@@ -52,7 +52,7 @@ class LivewireManager
         }
 
         $class = $class ?: (
-            $this->componentAliases[$alias] ?? $finder->find($alias)
+            isset($this->componentAliases[$alias]) ? $this->componentAliases[$alias] : $finder->find($alias)
         );
 
         throw_unless($class, new ComponentNotFoundException(
@@ -161,7 +161,7 @@ HTML;
     {
         $jsonEncodedOptions = $options ? json_encode($options) : '';
 
-        $appUrl = config('livewire.asset_url', rtrim($options['asset_url'] ?? '', '/'));
+        $appUrl = config('livewire.asset_url', rtrim(isset($options['asset_url']) ? $options['asset_url'] : '', '/'));
 
         $csrf = csrf_token();
 

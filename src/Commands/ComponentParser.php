@@ -4,12 +4,9 @@ namespace Livewire\Commands;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Console\DetectsApplicationNamespace;
 
 class ComponentParser
 {
-    use DetectsApplicationNamespace;
-
     protected $appPath;
     protected $viewPath;
     protected $component;
@@ -43,7 +40,7 @@ class ComponentParser
         return $this->baseClassPath.collect()
             ->concat($this->directories)
             ->push($this->classFile())
-            ->implode(DIRECTORY_SEPARATOR);
+            ->implode('/');
     }
 
     public function relativeClassPath()
@@ -88,7 +85,7 @@ class ComponentParser
             ->concat($this->directories)
             ->map([Str::class, 'kebab'])
             ->push($this->viewFile())
-            ->implode(DIRECTORY_SEPARATOR);
+            ->implode('/');
     }
 
     public function relativeViewPath()
@@ -133,6 +130,6 @@ class ComponentParser
     {
         $name = Str::replaceFirst(app()->getNamespace(), '', $namespace);
 
-        return app('path').'/'.str_replace('\\', '/', $name);
+        return app('path').DIRECTORY_SEPARATOR.str_replace('\\', '/', $name);
     }
 }

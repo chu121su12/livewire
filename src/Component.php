@@ -98,7 +98,8 @@ abstract class Component
 
         // Render the view with a Livewire-specific Blade compiler.
 
-        return (new LivewireViewCompiler($view))();
+        $livewireViewCompiler = (new LivewireViewCompiler($view));
+        return $livewireViewCompiler();
     }
 
     public function normalizePublicPropertiesForJavaScript()

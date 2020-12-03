@@ -37,7 +37,7 @@ class LivewireJavaScriptAssets
 
     protected function matchesCache($lastModified)
     {
-        $ifModifiedSince = $_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? '';
+        $ifModifiedSince = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? $_SERVER['HTTP_IF_MODIFIED_SINCE'] : '';
 
         return @strtotime($ifModifiedSince) === $lastModified;
     }

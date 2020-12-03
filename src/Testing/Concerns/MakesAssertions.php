@@ -2,7 +2,7 @@
 
 namespace Livewire\Testing\Concerns;
 
-use Illuminate\Foundation\Testing\Assert as PHPUnit;
+use Illuminate\Testing\Assert as PHPUnit;
 
 trait MakesAssertions
 {
