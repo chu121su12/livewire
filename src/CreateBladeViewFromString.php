@@ -2,9 +2,9 @@
 
 namespace Livewire;
 
-use Illuminate\View\Component;
+use Illuminate\View\Component as IlluminateComponent;
 
-class CreateBladeViewFromString extends Component
+class CreateBladeViewFromString extends IlluminateComponent
 {
     public function __invoke($contents)
     {
