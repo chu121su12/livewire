@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Artisan;
 class DiscoverCommandTest extends TestCase
 {
     /** @test */
-    public function components_that_are_created_manually_can_be_added_to_the_manifest()
+    public function components_that_are_created_manually_are_automatically_added_to_the_manifest()
     {
         // Make the class & view directories, because otherwise, the manifest file cannot be created.
         File::makeDirectory($this->livewireClassesPath());
@@ -40,22 +40,13 @@ EOT
 EOT
         );
 
-        // We will get an error when trying to find it because the manifest is stale.
-        try {
-            view('render-component', [
-                'component' => 'to-be-discovered',
-            ])->render();
-        } catch (\Exception $e) {
-            $this->assertContains('Unable to find component: [to-be-discovered]', $e->getMessage());
-        }
-
-        Artisan::call('livewire:discover');
+        // We will not get an error because we will regenerate the manifest for the user automatically
 
         $output = view('render-component', [
             'component' => 'to-be-discovered',
         ])->render();
 
-        $this->assertContains('I\'ve been discovered!', $output);
+        $this->assertStringContainsString('I\'ve been discovered!', $output);
     }
 
     /** @test */
@@ -64,7 +55,7 @@ EOT
         $manifestPath = app()->bootstrapPath('cache/livewire-components.php');
 
         // I'm calling "make:livewire" as a shortcut to generate a manifest file
-        Artisan::call('make:livewire foo');
+        Artisan::call('make:livewire', ['name' => 'foo']);
 
         File::delete($manifestPath);
 

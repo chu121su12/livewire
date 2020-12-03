@@ -9,7 +9,7 @@ use Livewire\Exceptions\CorruptComponentPayloadException;
 class RequestManipulatingMiddlewareAreDisabledForLivewireRequestsTest extends TestCase
 {
     /** @test */
-    public function livewire_request_data_doesnt_dont_get_manipulated()
+    public function livewire_request_data_doesnt_get_manipulated()
     {
         LivewireManager::$isLivewireRequestTestingOverride = true;
 
@@ -17,15 +17,14 @@ class RequestManipulatingMiddlewareAreDisabledForLivewireRequestsTest extends Te
 
         $component = app(LivewireManager::class)->test(ComponentWithStringPropertiesStub::class);
 
-        $this->withHeader('X-Livewire', 'true')->post("/livewire/message/{$component->name}", [
+        $this->withHeader('X-Livewire', 'true')->post("/livewire/message/{$component->componentName}", [
             'actionQueue' => [],
-            'name' => $component->name,
-            'children' => $component->children,
-            'data' => $component->data,
-            'id' => $component->id,
-            'checksum' => $component->checksum,
+            'name' => $component->componentName,
+            'children' => $component->payload['children'],
+            'data' => $component->payload['data'],
+            'id' => $component->payload['id'],
+            'checksum' => $component->payload['checksum'],
             'fromPrefetch' => [],
-            'gc' => $component->gc,
         ])->assertJson(['data' => [
             'emptyString' => '',
             'oneSpace' => ' ',
@@ -43,15 +42,14 @@ class RequestManipulatingMiddlewareAreDisabledForLivewireRequestsTest extends Te
 
         $component = app(LivewireManager::class)->test(ComponentWithStringPropertiesStub::class);
 
-        $this->post("/livewire/message/{$component->name}", [
+        $this->withMiddleware()->post("/livewire/message/{$component->componentName}", [
             'actionQueue' => [],
-            'name' => $component->name,
-            'children' => $component->children,
-            'data' => $component->data,
-            'id' => $component->id,
-            'checksum' => $component->checksum,
+            'name' => $component->componentName,
+            'children' => $component->payload['children'],
+            'data' => $component->payload['data'],
+            'id' => $component->payload['id'],
+            'checksum' => $component->payload['checksum'],
             'fromPrefetch' => [],
-            'gc' => $component->gc,
         ])->assertJson(['data' => [
             'emptyString' => null,
             'oneSpace' => null,

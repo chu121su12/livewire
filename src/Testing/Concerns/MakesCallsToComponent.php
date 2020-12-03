@@ -2,10 +2,13 @@
 
 namespace Livewire\Testing\Concerns;
 
-use Livewire\Testing\TestConnectionHandler;
-
 trait MakesCallsToComponent
 {
+    public function emit($event, ...$parameters)
+    {
+        return $this->fireEvent($event, $parameters);
+    }
+
     public function fireEvent($event, ...$parameters)
     {
         $this->sendMessage('fireEvent', [
@@ -60,17 +63,10 @@ trait MakesCallsToComponent
 
     public function sendMessage($message, $payload)
     {
-        $result = (new TestConnectionHandler)
-            ->handle([
-                'id' => $this->id,
-                'name' => $this->name,
-                'data' => $this->data,
-                'children' => $this->children,
-                'checksum' => $this->checksum,
-                'gc' => $this->gc,
-                'actionQueue' => [['type' => $message, 'payload' => $payload]],
-            ]);
+        $this->lastResponse = $this->pretendWereSendingAComponentUpdateRequest($message, $payload);
 
-        $this->updateComponent($result);
+        if (! $this->lastResponse->exception) {
+            $this->updateComponent($this->lastResponse->original);
+        }
     }
 }

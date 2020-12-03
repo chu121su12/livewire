@@ -1,6 +1,8 @@
 import ElementDirectives from "./directive_manager"
 import get from 'get-value'
-const prefix = require('./prefix.js')()
+import findPrefix from './prefix.js'
+import store from '@/Store'
+const prefix = findPrefix()
 
 /**
  * Consider this a decorator for the ElementNode JavaScript object. (Hence the
@@ -161,19 +163,24 @@ export default class DOMElement {
     }
 
     closestByAttribute(attribute) {
-        return new DOMElement(this.el.closest(`[${prefix}\\:${attribute}]`))
+        const closestEl = this.el.closest(`[${prefix}\\:${attribute}]`)
+
+        if (! closestEl) {
+            throw `
+Livewire Error:\n
+Cannot find parent element in DOM tree containing attribute: [${prefix}:${attribute}].\n
+Usually this is caused by Livewire's DOM-differ not being able to properly track changes.\n
+Reference the following guide for common causes: https://laravel-livewire.com/docs/troubleshooting \n
+Referenced element:\n
+${this.el.outerHTML}
+`
+        }
+
+        return new DOMElement(closestEl)
     }
 
     isComponentRootEl() {
         return this.hasAttribute('id')
-    }
-
-    isVueComponent() {
-        return !! this.asVueComponent()
-    }
-
-    asVueComponent() {
-        return this.rawNode().__vue__
     }
 
     hasAttribute(attribute) {
@@ -241,21 +248,23 @@ export default class DOMElement {
     }
 
     setInputValue(value) {
-        if (this.rawNode().__vue__) {
-            // If it's a vue component pass down the value prop.
-            // Also, Vue will throw a warning because we are programmaticallly
-            // setting a prop, we need to silence that.
-            const originalSilent = window.Vue.config.silent
-            window.Vue.config.silent = true
-            this.rawNode().__vue__.$props.value = value
-            window.Vue.config.silent = originalSilent
-        } else if (this.el.type === 'radio') {
+        store.callHook('interceptWireModelSetValue', this, value)
+
+        if (this.el.type === 'radio') {
             this.el.checked = this.el.value == value
         } else if (this.el.type === 'checkbox') {
             if (Array.isArray(value)) {
-                if (value.includes(this.el.value)) {
-                    this.el.checked = true
-                }
+                // I'm purposely not using Array.includes here because it's
+                // strict, and because of Numeric/String mis-casting, I
+                // want the "includes" to be "fuzzy".
+                let valueFound = false
+                value.forEach(val => {
+                    if (val == this.el.value) {
+                        valueFound = true
+                    }
+                })
+
+                this.el.checked = valueFound
             } else {
                 this.el.checked = !! value
             }

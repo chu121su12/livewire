@@ -2,26 +2,31 @@
 
 namespace Livewire;
 
-use Exception;
 use Illuminate\Support\Str;
+use Illuminate\Support\Fluent;
 use Livewire\Testing\TestableLivewire;
-use Livewire\Connection\ComponentHydrator;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Livewire\Exceptions\ComponentNotFoundException;
-use Illuminate\Routing\RouteDependencyResolverTrait;
+use Livewire\HydrationMiddleware\AddAttributesToRootTagOfHtml;
 
 class LivewireManager
 {
-    use RouteDependencyResolverTrait;
+    use DependencyResolverTrait;
 
+    protected $container;
     protected $prefix = 'wire';
     protected $componentAliases = [];
     protected $customComponentResolver;
-    protected $container;
+    protected $hydrationMiddleware = [];
+    protected $initialHydrationMiddleware = [];
+    protected $initialDehydrationMiddleware = [];
+    protected $listeners = [];
+
     public static $isLivewireRequestTestingOverride;
 
     public function __construct()
     {
-        // This property only exists to make the "RouteDependancyResolverTrait" work.
+        // This property only exists to make the "DependencyResolverTrait" work.
         $this->container = app();
     }
 
@@ -48,11 +53,21 @@ class LivewireManager
         $class = false;
 
         if ($this->customComponentResolver) {
+            // A developer can hijack the way Livewire finds components using Livewire::componentResolver();
             $class = call_user_func($this->customComponentResolver, $alias);
         }
 
         $class = $class ?: (
+            // Let's first check if the user registered the component using:
+            // Livewire::component('name', [Livewire component class]);
+            // If not, we'll look in the auto-discovery manifest.
             isset($this->componentAliases[$alias]) ? $this->componentAliases[$alias] : $finder->find($alias)
+        );
+
+        $class = $class ?: (
+            // If none of the above worked, our last-ditch effort will be
+            // to re-generate the auto-discovery manifest and look again.
+            $finder->build()->find($alias)
         );
 
         throw_unless($class, new ComponentNotFoundException(
@@ -66,7 +81,7 @@ class LivewireManager
     {
         $componentClass = $this->getComponentClass($component);
 
-        throw_unless(class_exists($componentClass), new Exception(
+        throw_unless(class_exists($componentClass), new ComponentNotFoundException(
             "Component [{$component}] class not found: [{$componentClass}]"
         ));
 
@@ -77,32 +92,41 @@ class LivewireManager
     {
         $id = Str::random(20);
 
-        $instance = $this->activate($name, $id);
+        // Allow instantiating Livewire components directly from classes.
+        if (class_exists($name)) {
+            $instance = new $name($id);
+            // Set the name to the computed name, so that the full namespace
+            // isn't leaked to the front-end.
+            $name = $instance->getName();
+        } else {
+            $instance = $this->activate($name, $id);
+        }
+
+        $this->initialHydrate($instance, []);
 
         $parameters = $this->resolveClassMethodDependencies(
-            $options,
-            $instance,
-            'mount'
+            $options, $instance, 'mount'
         );
 
         $instance->mount(...array_values($parameters));
 
         $dom = $instance->output();
-        $properties = ComponentHydrator::dehydrate($instance);
-        $events = $instance->getEventsBeingListenedFor();
-        $children = $instance->getRenderedChildren();
-        $checksum = (new ComponentChecksumManager)->generate($name, $id, $properties);
 
-        return new InitialResponsePayload([
-            'instance' => $instance,
+        $response = new Fluent([
             'id' => $id,
-            'dom' => $dom,
-            'data' => $properties,
             'name' => $name,
-            'checksum' => $checksum,
-            'children' => $children,
-            'events' => $events,
+            'dom' => $dom,
         ]);
+
+        $this->initialDehydrate($instance, $response);
+
+        $response->dom = (new AddAttributesToRootTagOfHtml)($response->dom, [
+            'initial-data' => array_diff_key($response->toArray(), array_flip(['dom'])),
+        ]);
+
+        $this->dispatch('mounted', $response);
+
+        return $response;
     }
 
     public function dummyMount($id, $tagName)
@@ -115,22 +139,66 @@ class LivewireManager
         return new TestableLivewire($name, $this->prefix, $params);
     }
 
+    public function actingAs(Authenticatable $user, $driver = null)
+    {
+        if (isset($user->wasRecentlyCreated) && $user->wasRecentlyCreated) {
+            $user->wasRecentlyCreated = false;
+        }
+
+        auth()->guard($driver)->setUser($user);
+
+        auth()->shouldUse($driver);
+
+        return $this;
+    }
+
+    // @todo remove in 1.0
     public function assets($options = [])
     {
         $debug = config('app.debug');
 
-        $jsFileName = $debug
-            ? '/livewire.js'
-            : '/livewire.min.js';
-
         $styles = $this->cssAssets();
-        $scripts = $this->javaScriptAssets($jsFileName, $options);
+
+        $scripts = $this->javaScriptAssets($options, $defer = true);
 
         // HTML Label.
-        $html = $debug ? ['<!-- Livewire assets -->'] : [];
+        $html = $debug ? ['<!-- Livewire Scripts -->'] : [];
+
+        // JavaScript assets.
+        $html[] = $debug ? $scripts : $this->minify($scripts);
+
+        // HTML Label.
+        $html[] = $debug ? '<!-- Livewire Styles -->' : '';
 
         // CSS assets.
         $html[] = $debug ? $styles : $this->minify($styles);
+
+        return implode("\n", $html);
+    }
+
+    public function styles($options = [])
+    {
+        $debug = config('app.debug');
+
+        $styles = $this->cssAssets();
+
+        // HTML Label.
+        $html = $debug ? ['<!-- Livewire Styles -->'] : [];
+
+        // CSS assets.
+        $html[] = $debug ? $styles : $this->minify($styles);
+
+        return implode("\n", $html);
+    }
+
+    public function scripts($options = [])
+    {
+        $debug = config('app.debug');
+
+        $scripts = $this->javaScriptAssets($options);
+
+        // HTML Label.
+        $html = $debug ? ['<!-- Livewire Scripts -->'] : [];
 
         // JavaScript assets.
         $html[] = $debug ? $scripts : $this->minify($scripts);
@@ -157,7 +225,7 @@ class LivewireManager
 HTML;
     }
 
-    protected function javaScriptAssets($jsFileName, $options)
+    protected function javaScriptAssets($options, $defer = false)
     {
         $jsonEncodedOptions = $options ? json_encode($options) : '';
 
@@ -165,8 +233,8 @@ HTML;
 
         $csrf = csrf_token();
 
-        $manifest = json_decode(file_get_contents(__DIR__.'/../dist/mix-manifest.json'), true);
-        $versionedFileName = $manifest[$jsFileName];
+        $manifest = json_decode(file_get_contents(__DIR__.'/../dist/manifest.json'), true);
+        $versionedFileName = $manifest['/livewire.js'];
 
         // Default to dynamic `livewire.js` (served by a Laravel route).
         $fullAssetPath = "{$appUrl}/livewire{$versionedFileName}";
@@ -174,9 +242,12 @@ HTML;
 
         // Use static assets if they have been published
         if (file_exists(public_path('vendor/livewire'))) {
-            $publishedManifest = json_decode(file_get_contents(public_path('vendor/livewire/mix-manifest.json')), true);
-            $versionedFileName = $publishedManifest[$jsFileName];
-            $fullAssetPath = "{$appUrl}/vendor/livewire{$versionedFileName}";
+            $publishedManifest = json_decode(file_get_contents(public_path('vendor/livewire/manifest.json')), true);
+            $versionedFileName = $publishedManifest['/livewire.js'];
+
+            $isHostedOnVapor = ($_ENV['SERVER_SOFTWARE'] ?? null) === 'vapor';
+
+            $fullAssetPath = ($isHostedOnVapor ? config('app.asset_url') : $appUrl).'/vendor/livewire'.$versionedFileName;
 
             if ($manifest !== $publishedManifest) {
                 $assetWarning = <<<'HTML'
@@ -187,19 +258,37 @@ HTML;
             }
         }
 
-        // Adding semicolons for this JavaScript is important,
-        // because it will be minified in production.
-        return <<<HTML
+        // @todo: remove in 1.0
+        if ($defer) {
+            return <<<HTML
 <script>
-    document.addEventListener('livewire:available', function () {
+    document.addEventListener('livewire:available', () => {
         window.livewire = new Livewire({$jsonEncodedOptions});
         window.livewire.start();
         window.livewire_app_url = '{$appUrl}';
         window.livewire_token = '{$csrf}';
-    });
+    })
 </script>
 {$assetWarning}
 <script src="{$fullAssetPath}" defer></script>
+HTML;
+
+        }
+
+        // Adding semicolons for this JavaScript is important,
+        // because it will be minified in production.
+        return <<<HTML
+{$assetWarning}
+<script src="{$fullAssetPath}"></script>
+<script>
+    window.livewire = new Livewire({$jsonEncodedOptions});
+    window.livewire_app_url = '{$appUrl}';
+    window.livewire_token = '{$csrf}';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        window.livewire.start();
+    });
+</script>
 HTML;
     }
 
@@ -215,5 +304,76 @@ HTML;
         }
 
         return request()->hasHeader('X-Livewire');
+    }
+
+    public function registerHydrationMiddleware(array $classes)
+    {
+        $this->hydrationMiddleware += $classes;
+    }
+
+    public function registerInitialHydrationMiddleware(array $callables)
+    {
+        $this->initialHydrationMiddleware += $callables;
+    }
+
+    public function registerInitialDehydrationMiddleware(array $callables)
+    {
+        $this->initialDehydrationMiddleware += $callables;
+    }
+
+    public function hydrate($instance, $request)
+    {
+        foreach ($this->hydrationMiddleware as $class) {
+            $class::hydrate($instance, $request);
+        }
+    }
+
+    public function initialHydrate($instance, $request)
+    {
+        foreach ($this->initialHydrationMiddleware as $callable) {
+            $callable($instance, $request);
+        }
+    }
+
+    public function initialDehydrate($instance, $response)
+    {
+        foreach (array_reverse($this->initialDehydrationMiddleware) as $callable) {
+            $callable($instance, $response);
+        }
+    }
+
+    public function dehydrate($instance, $response)
+    {
+        // The array is being reversed here, so the middleware dehydrate phase order of execution is
+        // the inverse of hydrate. This makes the middlewares behave like layers in a shell.
+        foreach (array_reverse($this->hydrationMiddleware) as $class) {
+            $class::dehydrate($instance, $response);
+        }
+    }
+
+    public function getRootElementTagName($dom)
+    {
+        preg_match('/<([a-zA-Z0-9\-]*)/', $dom, $matches, PREG_OFFSET_CAPTURE);
+
+        return $matches[1][0];
+    }
+
+    public function dispatch($event, ...$params)
+    {
+        foreach ($this->listeners[$event] ?? [] as $listener) {
+            $listener(...$params);
+        }
+    }
+
+    public function listen($event, $callback)
+    {
+        $this->listeners[$event] ?? $this->listeners[$event] = [];
+
+        $this->listeners[$event][] = $callback;
+    }
+
+    public function isOnVapor()
+    {
+        return ($_ENV['SERVER_SOFTWARE'] ?? null) === 'vapor';
     }
 }

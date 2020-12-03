@@ -15,6 +15,18 @@ test('basic click', async () => {
     })
 })
 
+test('basic click with self modifier', async () => {
+    var payload
+    mount('<button wire:click.self="outerMethod"><span wire:click="innerMethod"></span></button>', i => payload = i)
+
+    document.querySelector('span').click()
+
+    await wait(() => {
+        expect(payload.actionQueue[0].payload.method).toEqual('innerMethod')
+        expect(payload.actionQueue[1]).toBeUndefined()
+    })
+})
+
 test('click with params', async () => {
     var payload
     mount(`<button wire:click="someMethod('foo', 'bar')"></button>`, i => payload = i)
@@ -82,6 +94,17 @@ test('keyup.enter doesnt fire when other keys are pressed', async () => {
     expect(payload).toBeUndefined()
 })
 
+test('keyup.cmd.enter', async () => {
+    var payload
+    mount('<button wire:keyup.cmd.enter="otherMethod"></button>', i => payload = i)
+
+    fireEvent.keyUp(document.querySelector('button'), { metaKey: false, key: 'Enter' })
+
+    await timeout(10)
+
+    expect(payload).toBeUndefined()
+})
+
 test('polling is disabled if livewire is offline', async () => {
     var pollHappened = false
     mount('<div wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
@@ -110,7 +133,7 @@ test('polling without specifying method refreshes by default', async () => {
 
 test('polling on root div', async () => {
     var pollHappened = false
-    mountAsRoot('<div wire:id="123" wire:data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
+    mountAsRoot('<div wire:id="123" wire:initial-data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
 
     await timeout(49)
 
@@ -123,7 +146,7 @@ test('polling on root div', async () => {
 
 test('polling is disabled if ', async () => {
     var pollHappened = false
-    mountAsRoot('<div wire:id="123" wire:data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
+    mountAsRoot('<div wire:id="123" wire:initial-data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
 
     await timeout(49)
 
@@ -136,9 +159,81 @@ test('polling is disabled if ', async () => {
 
 test('init', async () => {
     var initHappened = false
-    mountAsRoot('<div wire:id="123" wire:data="{}" wire:init="someMethod"></div>', () => { initHappened = true })
+    mountAsRoot('<div wire:id="123" wire:initial-data="{}" wire:init="someMethod"></div>', () => { initHappened = true })
 
     await timeout(10)
 
     expect(initHappened).toBeTruthy()
+})
+
+test('form buttons disabled and inputs read-only during submission', async () => {
+    var payload
+    mount(`
+        <form wire:submit.prevent="someMethod">
+            <input type="text">
+            <button type="submit"></button>
+        </form>
+    `, i => payload = i)
+
+    document.querySelector('button').click()
+
+    await wait(() => {
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('someMethod')
+        expect(payload.actionQueue[0].payload.params).toEqual([])
+        expect(document.querySelector('button').disabled).toBeTruthy()
+        expect(document.querySelector('input').readOnly).toBeTruthy()
+    })
+})
+
+test('action paramters without space around comma', async () => {
+    var payload
+    mount(`<button wire:click="callSomething('foo','bar')"></button>`, i => payload = i)
+
+    fireEvent.click(document.querySelector('button'))
+
+    await wait(() => {
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('callSomething')
+        expect(payload.actionQueue[0].payload.params).toEqual(['foo', 'bar'])
+    })
+})
+
+test('action paramters with space before comma', async () => {
+    var payload
+    mount(`<button wire:click="callSomething('foo' ,'bar')"></button>`, i => payload = i)
+
+    fireEvent.click(document.querySelector('button'))
+
+    await wait(() => {
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('callSomething')
+        expect(payload.actionQueue[0].payload.params).toEqual(['foo', 'bar'])
+    })
+})
+
+test('action paramters with space after comma', async () => {
+    var payload
+    mount(`<button wire:click="callSomething('foo', 'bar')"></button>`, i => payload = i)
+
+    fireEvent.click(document.querySelector('button'))
+
+    await wait(() => {
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('callSomething')
+        expect(payload.actionQueue[0].payload.params).toEqual(['foo', 'bar'])
+    })
+})
+
+test('action paramters with space around comma', async () => {
+    var payload
+    mount(`<button wire:click="callSomething('foo' , 'bar')"></button>`, i => payload = i)
+
+    fireEvent.click(document.querySelector('button'))
+
+    await wait(() => {
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('callSomething')
+        expect(payload.actionQueue[0].payload.params).toEqual(['foo', 'bar'])
+    })
 })

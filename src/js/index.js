@@ -1,16 +1,17 @@
 import componentStore from '@/Store'
 import DOM from "@/dom/dom";
-import Component from "@/Component/index";
+import Component from "@/component/index";
 import Connection from '@/connection'
 import drivers from '@/connection/drivers'
-import { ArrayFlat, ArrayFrom, ArrayIncludes, ElementGetAttributeNames } from '@/dom/polyfills';
-import 'whatwg-fetch'
-import 'promise-polyfill/src/polyfill';
+import '@/dom/polyfills/index';
 import { dispatch } from './util';
 import LoadingStates from '@/component/LoadingStates'
+import DisableForms from '@/component/DisableForms'
 import DirtyStates from '@/component/DirtyStates'
 import OfflineStates from '@/component/OfflineStates'
 import Polling from '@/component/Polling'
+import UpdateQueryString from '@/component/UpdateQueryString'
+import SupportVueJs from '@/component/SupportVueJs'
 
 class Livewire {
     constructor(options = {}) {
@@ -27,14 +28,14 @@ class Livewire {
         this.connection = new Connection(driver)
         this.components = componentStore
         this.onLoadCallback = () => {};
-
-        this.activatePolyfills()
-
-        this.components.initializeGarbageCollection()
     }
 
     find(componentId) {
         return this.components.componentsById[componentId]
+    }
+
+    directive(name, callback) {
+        this.components.registerDirective(name, callback)
     }
 
     hook(name, callback) {
@@ -43,13 +44,6 @@ class Livewire {
 
     onLoad(callback) {
         this.onLoadCallback = callback
-    }
-
-    activatePolyfills() {
-        ArrayFlat()
-        ArrayFrom()
-        ArrayIncludes()
-        ElementGetAttributeNames()
     }
 
     emit(event, ...params) {
@@ -79,8 +73,6 @@ class Livewire {
         this.onLoadCallback()
         dispatch('livewire:load')
 
-        // This is very important for garbage collecting components
-        // on the backend.
         window.addEventListener('beforeunload', () => {
             this.components.tearDownComponents()
         })
@@ -101,14 +93,6 @@ class Livewire {
         })
     }
 
-    beforeDomUpdate(callback) {
-        this.components.beforeDomUpdate(callback)
-    }
-
-    afterDomUpdate(callback) {
-        this.components.afterDomUpdate(callback)
-    }
-
     plugin(callable) {
         callable(this)
     }
@@ -118,7 +102,10 @@ if (! window.Livewire) {
     window.Livewire = Livewire
 }
 
+UpdateQueryString()
+SupportVueJs()
 LoadingStates()
+DisableForms()
 DirtyStates()
 OfflineStates()
 Polling()

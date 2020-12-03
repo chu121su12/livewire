@@ -2,8 +2,6 @@
 
 namespace Livewire\Connection;
 
-use Livewire\Livewire;
-
 class HttpConnectionHandler extends ConnectionHandler
 {
     public function __invoke()
@@ -17,7 +15,7 @@ class HttpConnectionHandler extends ConnectionHandler
                 'id',
                 'checksum',
                 'fromPrefetch',
-                'gc',
+                'errorBag',
             ])
         );
     }

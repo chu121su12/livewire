@@ -2,31 +2,39 @@
 
 namespace Livewire\Testing;
 
+use Livewire\Livewire;
 use Illuminate\Support\Str;
-use Livewire\Connection\ComponentHydrator;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Route;
 
 class TestableLivewire
 {
-    public $name;
-    public $id;
-    public $children;
-    public $checksum;
     public $prefix;
-    public $instance;
-    public $dom;
-    public $data;
-    public $dirtyInputs;
-    public $events;
-    public $eventQueue;
-    public $redirectTo;
-    public $gc;
+    public $payload = [];
+    public $componentName;
+    public $lastValidator;
+    public $lastRenderedView;
+    public $lastResponse;
+    public $rawMountedResponse;
 
-    use Concerns\HasFunLittleUtilities,
+    use Concerns\MakesAssertions,
         Concerns\MakesCallsToComponent,
-        Concerns\MakesAssertions;
+        Concerns\HasFunLittleUtilities;
 
     public function __construct($name, $prefix, $params = [])
     {
+        Livewire::listen('view:render', function ($view) {
+            $this->lastRenderedView = $view;
+        });
+
+        Livewire::listen('failed-validation', function ($validator) {
+            $this->lastValidator = $validator;
+        });
+
+        Livewire::listen('mounted', function ($response) {
+            $this->rawMountedResponse = $response;
+        });
+
         $this->prefix = $prefix;
 
         // This allows the user to test a component by it's class name,
@@ -36,56 +44,104 @@ class TestableLivewire
             app('livewire')->component($name = Str::random(20), $componentClass);
         }
 
-        $result = app('livewire')->mount($this->name = $name, ...$params);
+        $this->componentName = $name;
 
-        $this->initialUpdateComponent($result);
+        $this->lastResponse = $this->pretendWereMountingAComponentOnAPage($name, $params);
+
+        if (! $this->lastResponse->exception) {
+            $this->updateComponent($this->rawMountedResponse);
+        }
     }
 
-    public function initialUpdateComponent($output)
+    public function updateComponent($output)
     {
-        $this->id = $output->id;
-        $this->dom = $output->toHtml();
-        $this->data = $output->data;
-        $this->children = $output->children;
-        $this->events = $output->events;
-        $this->instance = $output->instance;
-        $this->checksum = $output->checksum;
-        $this->gc = [];
+        $this->payload = [
+            'id' => $output->id,
+            'name' => $output->name,
+            'dom' => $output->dom,
+            'data' => $output->data,
+            'children' => $output->children,
+            'events' => $output->events,
+            'eventQueue' => $output->eventQueue,
+            'dispatchQueue' => $output->dispatchQueue,
+            'errorBag' => $output->errorBag,
+            'checksum' => $output->checksum,
+            'redirectTo' => $output->redirectTo,
+            'dirtyInputs' => $output->dirtyInputs,
+            'updatesQueryString' => $output->updatesQueryString,
+        ];
     }
 
-    public function updateComponent($response)
+    public function pretendWereMountingAComponentOnAPage($name, $params)
     {
-        $output = $response->toArray();
+        $randomRoutePath = '/testing-livewire/'.Str::random(20);
 
-        $this->id = $output['id'];
-        $this->dom = $output['dom'];
-        $this->data = $output['data'];
-        $this->checksum = $output['checksum'];
-        $this->children = $output['children'];
-        $this->dirtyInputs = $output['dirtyInputs'];
-        $this->events = $output['events'];
-        $this->redirectTo = $output['redirectTo'];
-        $this->eventQueue = $output['eventQueue'];
+        Route::get($randomRoutePath, function () use ($name, $params) {
+            return View::file(__DIR__.'/../views/mount-component.blade.php', [
+                'name' => $name,
+                'params' => $params,
+            ]);
+        });
 
-        // Imitate the front-end clearing the garbage collector
-        // of ids that have already been garbage collected.
-        $this->gc = array_diff($this->gc, $output['gc']);
+        $laravelTestingWrapper = new MakesHttpRequestsWrapper(app());
 
-        $this->instance = ComponentHydrator::hydrate($this->name, $this->id, $this->data, $this->checksum);
+        $response = null;
+
+        $laravelTestingWrapper->temporarilyDisableExceptionHandlingAndMiddleware(function ($wrapper) use ($randomRoutePath, &$response) {
+            $response = $wrapper->call('GET', $randomRoutePath);
+        });
+
+        return $response;
+    }
+
+    public function pretendWereSendingAComponentUpdateRequest($message, $payload)
+    {
+        $laravelTestingWrapper = new MakesHttpRequestsWrapper(app());
+
+        $response = null;
+
+        $laravelTestingWrapper->temporarilyDisableExceptionHandlingAndMiddleware(function ($wrapper) use (&$response, $message, $payload) {
+            $response = $wrapper->call('POST', '/livewire/message/'.$this->componentName, [
+                'id' => $this->payload['id'],
+                'name' => $this->payload['name'],
+                'data' => $this->payload['data'],
+                'children' => $this->payload['children'],
+                'checksum' => $this->payload['checksum'],
+                'errorBag' => $this->payload['errorBag'],
+                'actionQueue' => [['type' => $message, 'payload' => $payload]],
+            ]);
+        });
+
+        return $response;
+    }
+
+    public function id()
+    {
+        return $this->payload['id'];
+    }
+
+    public function instance()
+    {
+        return Livewire::activate($this->componentName, $this->id());
+    }
+
+    public function viewData($key)
+    {
+        return $this->lastRenderedView->gatherData()[$key];
+    }
+
+    public function get($property)
+    {
+        return data_get($this->payload['data'], $property);
     }
 
     public function __get($property)
     {
-        return $this->instance->getPropertyValue($property);
+        return $this->get($property);
     }
 
     public function __call($method, $params)
     {
-        return $this->call($method, $params);
-    }
-
-    public function __set($name, $value)
-    {
-        return $this->set($name, $value);
+        return $this->lastResponse->$method(...$params);
     }
 }

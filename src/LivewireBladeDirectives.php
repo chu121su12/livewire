@@ -11,9 +11,20 @@ class LivewireBladeDirectives
         return "window.livewire.find('{{ \$_instance->id }}')";
     }
 
+    // @todo: removing in 1.0
     public static function livewireAssets($expression)
     {
         return '{!! \Livewire\Livewire::assets('.$expression.') !!}';
+    }
+
+    public static function livewireStyles($expression)
+    {
+        return '{!! \Livewire\Livewire::styles('.$expression.') !!}';
+    }
+
+    public static function livewireScripts($expression)
+    {
+        return '{!! \Livewire\Livewire::scripts('.$expression.') !!}';
     }
 
     public static function livewire($expression)
@@ -32,7 +43,7 @@ class LivewireBladeDirectives
         return <<<EOT
 <?php
 if (! isset(\$_instance)) {
-    \$dom = \Livewire\Livewire::mount({$expression})->toHtml();
+    \$dom = \Livewire\Livewire::mount({$expression})->dom;
 } elseif (\$_instance->childHasBeenRendered($cachedKey)) {
     \$componentId = \$_instance->getRenderedChildComponentId($cachedKey);
     \$componentTag = \$_instance->getRenderedChildComponentTagName($cachedKey);
@@ -40,8 +51,8 @@ if (! isset(\$_instance)) {
     \$_instance->preserveRenderedChild($cachedKey);
 } else {
     \$response = \Livewire\Livewire::mount({$expression});
-    \$dom = \$response->toHtml();
-    \$_instance->logRenderedChild($cachedKey, \$response->id, \$response->getRootElementTagName());
+    \$dom = \$response->dom;
+    \$_instance->logRenderedChild($cachedKey, \$response->id, \Livewire\Livewire::getRootElementTagName(\$dom));
 }
 echo \$dom;
 ?>

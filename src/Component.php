@@ -5,21 +5,26 @@ namespace Livewire;
 use Illuminate\View\View;
 use BadMethodCallException;
 use Illuminate\Support\Str;
-use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
-use Livewire\Exceptions\PublicPropertyTypeNotAllowedException;
+use Illuminate\Support\Traits\Macroable;
+use Livewire\Livewire;
 
 abstract class Component
 {
-    use Concerns\ValidatesInput,
-        Concerns\DetectsDirtyProperties,
-        Concerns\HandlesActions,
-        Concerns\PerformsRedirects,
-        Concerns\ReceivesEvents,
-        Concerns\InteractsWithProperties,
-        Concerns\TracksRenderedChildren;
+    use Macroable { __call as macroCall; }
+
+    use ComponentConcerns\ValidatesInput,
+        ComponentConcerns\HandlesActions,
+        ComponentConcerns\ReceivesEvents,
+        ComponentConcerns\PerformsRedirects,
+        ComponentConcerns\DetectsDirtyProperties,
+        ComponentConcerns\TracksRenderedChildren,
+        ComponentConcerns\InteractsWithProperties;
 
     public $id;
+
+    protected $computedPropertyCache = [];
+    protected $updatesQueryString = [];
     protected $lifecycleHooks = [
         'mount', 'hydrate', 'updating', 'updated',
     ];
@@ -27,15 +32,16 @@ abstract class Component
     public function __construct($id)
     {
         $this->id = $id;
+
         $this->initializeTraits();
     }
 
     protected function initializeTraits()
     {
-        $class = static::class;
+        foreach (class_uses_recursive($class = static::class) as $trait) {
+            $method = 'initialize'.class_basename($trait);
 
-        foreach (class_uses_recursive($class) as $trait) {
-            if (method_exists($class, $method = 'initialize'.class_basename($trait))) {
+            if (method_exists($class, $method)) {
                 $this->{$method}();
             }
         }
@@ -58,67 +64,70 @@ abstract class Component
         return $name;
     }
 
+    public function getUpdatesQueryString()
+    {
+        return $this->updatesQueryString;
+    }
+
+    public function getCasts()
+    {
+        return $this->casts;
+    }
+
     public function render()
     {
         return view("livewire.{$this->getName()}");
     }
 
-    public function cache($key = null, $value = null)
-    {
-        $cacheManager = new ComponentCacheManager($this);
-
-        if (is_null($key)) {
-            return $cacheManager;
-        }
-
-        if (is_null($value)) {
-            return $cacheManager->get($key);
-        }
-
-        return $cacheManager->put($key, $value);
-    }
-
     public function output($errors = null)
     {
+        // In the service provider, we hijack Laravel's Blade engine
+        // with our own. However, we only want Livewire hijackings,
+        // while we're rendering Livewire components. So we'll
+        // activate it here, and deactivate it at the end
+        // of this method.
+        $engine = app('view.engine.resolver')->resolve('blade');
+        $engine->startLivewireRendering($this);
+
         $view = $this->render();
 
         // Normalize all the public properties in the component for JavaScript.
-        $this->normalizePublicPropertiesForJavaScript();
+        $this->normalizePublicPropertiesForBladeView();
 
         throw_unless($view instanceof View,
             new \Exception('"render" method on ['.get_class($this).'] must return instance of ['.View::class.']'));
 
-        $view
-            ->with([
-                'errors' => (new ViewErrorBag)->put('default', $errors ?: new MessageBag),
-                '_instance' => $this,
-            ])
-            // Automatically inject all public properties into the blade view.
-            ->with($this->getPublicPropertiesDefinedBySubClass());
-
-        // Render the view with a Livewire-specific Blade compiler.
-
-        $livewireViewCompiler = (new LivewireViewCompiler($view));
-        return $livewireViewCompiler();
-    }
-
-    public function normalizePublicPropertiesForJavaScript()
-    {
-        $normalizedProperties = $this->castDataToJavaScriptReadableTypes(
-            $this->reindexArraysWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder(
-                $this->getPublicPropertiesDefinedBySubClass()
-            )
+        $this->setErrorBag(
+            $errorBag = $errors ?: ($view->errors ?: $this->getErrorBag())
         );
 
-        foreach ($normalizedProperties as $key => $value) {
-            $this->setPropertyValue($key, $value);
+        $view->with([
+            'errors' => (new ViewErrorBag)->put('default', $errorBag),
+            '_instance' => $this,
+        ] + $this->getPublicPropertiesDefinedBySubClass());
+
+        $output = $view->render();
+
+        Livewire::dispatch('view:render', $view);
+
+        $engine->endLivewireRendering();
+
+        return $output;
+    }
+
+    public function normalizePublicPropertiesForBladeView()
+    {
+        foreach ($this->getPublicPropertiesDefinedBySubClass() as $key => $value) {
+            if (is_array($value)) {
+                $this->$key = $this->reindexArrayWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value);
+            }
         }
     }
 
-    protected function reindexArraysWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($data)
+    protected function reindexArrayWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value)
     {
-        if (! is_array($data)) {
-            return $data;
+        if (! is_array($value)) {
+            return $value;
         }
 
         if (version_compare(PHP_VERSION, '7.0.0', '<')) {
@@ -139,38 +148,28 @@ abstract class Component
             }
 
         } else {
-            $normalizedData = $data;
 
-            // Make sure string keys are last (but not ordered). JSON.parse will do this.
-            uksort($normalizedData, function ($a, $b) {
-                return is_string($a) && is_numeric($b)
-                    ? 1
-                    : 0;
-            });
+        $normalizedData = $data;
 
-            // Order numeric indexes.
-            uksort($normalizedData, function ($a, $b) {
-                return is_numeric($a) && is_numeric($b)
-                    ? $a > $b
-                    : 0;
-            });
+        // Make sure string keys are last (but not ordered). JSON.parse will do this.
+        uksort($normalizedData, function ($a, $b) {
+            return is_string($a) && is_numeric($b)
+                ? 1
+                : 0;
+        });
+
+        // Order numeric indexes.
+        uksort($normalizedData, function ($a, $b) {
+            return is_numeric($a) && is_numeric($b)
+                ? $a > $b
+                : 0;
+        });
+
         }
 
         return array_map(function ($value) {
-            return $this->reindexArraysWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value);
+            return $this->reindexArrayWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value);
         }, $normalizedData);
-    }
-
-    public function castDataToJavaScriptReadableTypes($data)
-    {
-        array_walk($data, function ($value, $key) {
-            throw_unless(
-                is_bool($value) || is_null($value) || is_array($value) || is_numeric($value) || is_string($value),
-                new PublicPropertyTypeNotAllowedException($this->getName(), $key, $value)
-            );
-        });
-
-        return json_decode(json_encode($data), true);
     }
 
     public function __call($method, $params)
@@ -183,8 +182,25 @@ abstract class Component
             return;
         }
 
+        if (static::hasMacro($method)) {
+            return $this->macroCall($method, $params);
+        }
+
         throw new BadMethodCallException(sprintf(
             'Method %s::%s does not exist.', static::class, $method
         ));
+    }
+
+    public function __get($property)
+    {
+        if (method_exists($this, $computedMethodName = 'get'.ucfirst($property).'Property')) {
+            if (isset($this->computedPropertyCache[$property])) {
+                return $this->computedPropertyCache[$property];
+            } else {
+                return $this->computedPropertyCache[$property] = $this->$computedMethodName();
+            }
+        }
+
+        throw new \Exception("Property [{$property}] does not exist on the Component instance.");
     }
 }

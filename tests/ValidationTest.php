@@ -14,8 +14,8 @@ class ValidationTest extends TestCase
 
         $component->runAction('runValidation');
 
-        $this->assertStringNotContainsString('The foo field is required', $component->dom);
-        $this->assertStringContainsString('The bar field is required', $component->dom);
+        $this->assertStringNotContainsString('The foo field is required', $component->payload['dom']);
+        $this->assertStringContainsString('The bar field is required', $component->payload['dom']);
     }
 
     /** @test */
@@ -25,7 +25,7 @@ class ValidationTest extends TestCase
 
         $component->runAction('runValidationWithCustomMessage');
 
-        $this->assertStringContainsString('Custom Message', $component->dom);
+        $this->assertStringContainsString('Custom Message', $component->payload['dom']);
     }
 
     /** @test */
@@ -35,7 +35,7 @@ class ValidationTest extends TestCase
 
         $component->runAction('runValidationWithCustomAttribute');
 
-        $this->assertStringContainsString('The foobar field is required.', $component->dom);
+        $this->assertStringContainsString('The foobar field is required.', $component->payload['dom']);
     }
 
     /** @test */
@@ -45,7 +45,7 @@ class ValidationTest extends TestCase
 
         $component->runAction('runNestedValidation');
 
-        $this->assertStringContainsString('emails.1 must be a valid email address.', $component->dom);
+        $this->assertStringContainsString('emails.1 must be a valid email address.', $component->payload['dom']);
     }
 
     /** @test */
@@ -55,8 +55,66 @@ class ValidationTest extends TestCase
 
         $component->runAction('runDeeplyNestedValidation');
 
-        $this->assertStringContainsString('items.1.baz field is required', $component->dom);
-        $this->assertStringNotContainsString('items.0.baz field is required', $component->dom);
+        $this->assertStringContainsString('items.1.baz field is required', $component->payload['dom']);
+        $this->assertStringNotContainsString('items.0.baz field is required', $component->payload['dom']);
+    }
+
+    /** @test */
+    public function validation_errors_persist_across_requests()
+    {
+        $component = app(LivewireManager::class)->test(ForValidation::class);
+
+        $component->call('runValidation')
+            ->assertSee('The bar field is required')
+            ->set('foo', 'bar')
+            ->assertSee('The bar field is required');
+    }
+
+    /** @test */
+    public function old_validation_errors_are_overwritten_if_new_request_has_errors()
+    {
+        $component = app(LivewireManager::class)->test(ForValidation::class);
+
+        $component->call('runValidation')
+            ->set('foo', '')
+            ->call('runValidation')
+            ->call('$refresh')
+            ->assertSee('The foo field is required');
+    }
+
+    /** @test */
+    public function old_validation_is_cleared_if_new_validation_passes()
+    {
+        $component = app(LivewireManager::class)->test(ForValidation::class);
+
+        $component
+            ->set('foo', '')
+            ->set('bar', '')
+            ->call('runValidation')
+            ->assertSee('The foo field is required')
+            ->assertSee('The bar field is required')
+            ->set('foo', 'foo')
+            ->set('bar', 'bar')
+            ->call('runValidation')
+            ->assertDontSee('The foo field is required')
+            ->assertDontSee('The bar field is required');
+    }
+
+    /** @test */
+    public function can_validate_only_a_specific_field_and_preserve_other_validation_messages()
+    {
+        $component = app(LivewireManager::class)->test(ForValidation::class);
+
+        $component
+            ->set('foo', 'foo')
+            ->set('bar', '')
+            ->call('runValidation')
+            ->assertDontSee('The foo field is required')
+            ->assertSee('The bar field is required')
+            ->set('foo', '')
+            ->call('runValidationOnly', 'foo')
+            ->assertSee('The foo field is required')
+            ->assertSee('The bar field is required');
     }
 }
 
@@ -73,6 +131,14 @@ class ForValidation extends Component
     public function runValidation()
     {
         $this->validate([
+            'foo' => 'required',
+            'bar' => 'required',
+        ]);
+    }
+
+    public function runValidationOnly($field)
+    {
+        $this->validateOnly($field, [
             'foo' => 'required',
             'bar' => 'required',
         ]);

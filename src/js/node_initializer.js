@@ -18,6 +18,10 @@ export default {
                     break;
 
                 default:
+                    if (store.directives.has(directive.type)) {
+                        store.directives.call(directive.type, el.el, directive, component)
+                    }
+
                     this.attachDomListener(el, directive, component)
                     break;
             }
@@ -44,33 +48,25 @@ export default {
         }
         const hasDebounceModifier = directive.modifiers.includes('debounce')
 
-        // If it's a Vue component, listen for Vue input event emission.
-        if (el.isVueComponent()) {
-            el.asVueComponent().$on('input', debounceIf(hasDebounceModifier, e => {
-                const model = directive.value
-                const value = e
+        store.callHook('interceptWireModelAttachListener', el, directive, component, debounceIf)
 
-                component.addAction(new ModelAction(model, value, el))
-            }, directive.durationOr(150)))
-        } else {
-            const defaultEventType = el.isTextInput() ? 'input' : 'change'
+        const defaultEventType = el.isTextInput() ? 'input' : 'change'
 
-            // If it's a text input and not .lazy, debounce, otherwise fire immediately.
-            const event = isLazy ? 'change' : defaultEventType
-            const handler = debounceIf(hasDebounceModifier || (el.isTextInput() && ! isLazy), e => {
-                const model = directive.value
-                const el = new DOMElement(e.target)
-                const value = el.valueFromInput(component)
+        // If it's a text input and not .lazy, debounce, otherwise fire immediately.
+        const event = isLazy ? 'change' : defaultEventType
+        const handler = debounceIf(hasDebounceModifier || (el.isTextInput() && ! isLazy), e => {
+            const model = directive.value
+            const el = new DOMElement(e.target)
+            const value = el.valueFromInput(component)
 
-                component.addAction(new ModelAction(model, value, el))
-            }, directive.durationOr(150))
+            component.addAction(new ModelAction(model, value, el))
+        }, directive.durationOr(150))
 
-            el.addEventListener(event, handler)
+        el.addEventListener(event, handler)
 
-            component.addListenerForTeardown(() => {
-                el.removeEventListener(event, handler)
-            })
-        }
+        component.addListenerForTeardown(() => {
+            el.removeEventListener(event, handler)
+        })
     },
 
     attachDomListener(el, directive, component) {
@@ -78,9 +74,35 @@ export default {
             case 'keydown':
             case 'keyup':
                 this.attachListener(el, directive, component, (e) => {
+                    // Detect system modifier key combinations if specified.
+                    const systemKeyModifiers = ['ctrl', 'shift', 'alt', 'meta', 'cmd', 'super']
+                    const selectedSystemKeyModifiers = systemKeyModifiers.filter(key => directive.modifiers.includes(key))
+
+                    if (selectedSystemKeyModifiers.length > 0) {
+                        const selectedButNotPressedKeyModifiers = selectedSystemKeyModifiers.filter(key => {
+                            // Alias "cmd" and "super" to "meta"
+                            if (key === 'cmd' || key === 'super') key = 'meta'
+
+                            return ! e[`${key}Key`]
+                        })
+
+                        if (selectedButNotPressedKeyModifiers.length > 0) return false;
+                    }
+
                     // Only handle listener if no, or matching key modifiers are passed.
-                    return ! (directive.modifiers.length === 0
+                    return (directive.modifiers.length === 0
                         || directive.modifiers.includes(kebabCase(e.key)))
+                })
+                break;
+            case 'click':
+                this.attachListener(el, directive, component, (e) => {
+                    // We only care about elements that have the .self modifier on them.
+                    if (! directive.modifiers.includes('self')) return
+
+                    // This ensures a listener is only run if the event originated
+                    // on the elemenet that registered it (not children).
+                    // This is useful for things like modal back-drop listeners.
+                    return el.isSameNode(e.target)
                 })
                 break;
             default:
@@ -98,7 +120,7 @@ export default {
 
         const event = directive.type
         const handler = e => {
-            if (callback && callback(e) !== false) {
+            if (callback && callback(e) === false) {
                 return
             }
 
@@ -115,7 +137,13 @@ export default {
 
                 // Check for global event emission.
                 if (method === '$emit') {
+                    component.scopedListeners.call(...params)
                     store.emit(...params)
+                    return
+                }
+
+                if (method === '$emitUp') {
+                    store.emitUp(el, ...params)
                     return
                 }
 

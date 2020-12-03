@@ -2,55 +2,39 @@
 
 namespace Livewire\Connection;
 
-use Livewire\Routing\Redirector;
-use Livewire\ComponentCacheManager;
-use Livewire\ComponentChecksumManager;
-use Livewire\SubsequentResponsePayload;
+use Livewire\Livewire;
+use Illuminate\Support\Fluent;
 use Illuminate\Validation\ValidationException;
 
 abstract class ConnectionHandler
 {
     public function handle($payload)
     {
-        $instance = ComponentHydrator::hydrate($payload['name'], $payload['id'], $payload['data'], $payload['checksum']);
-
-        $instance->setPreviouslyRenderedChildren($payload['children']);
-        $instance->hashPropertiesForDirtyDetection();
-
-        $instance->hydrate();
+        $instance = app('livewire')->activate($payload['name'], $payload['id']);
 
         try {
-            $this->interceptRedirects($instance, function () use ($payload, $instance) {
-                foreach ($this->prioritizeInputSyncing($payload['actionQueue']) as $action) {
-                    $this->processMessage($action['type'], $action['payload'], $instance);
-                }
-            });
+            Livewire::hydrate($instance, $payload);
+
+            $instance->hydrate();
+
+            foreach ($payload['actionQueue'] as $action) {
+                $this->processMessage($action['type'], $action['payload'], $instance);
+            }
         } catch (ValidationException $e) {
+            Livewire::dispatch('failed-validation', $e->validator);
+
             $errors = $e->validator->errors();
         }
 
-        $dom = $instance->output(isset($errors) ? $errors : null);
-        $data = ComponentHydrator::dehydrate($instance);
-        $events = $instance->getEventsBeingListenedFor();
-        $eventQueue = $instance->getEventQueue();
+        $dom = $instance->output($errors ?? null);
 
-        $response = new SubsequentResponsePayload([
+        $response = new Fluent([
             'id' => $payload['id'],
+            'name' => $payload['name'],
             'dom' => $dom,
-            'checksum' => (new ComponentChecksumManager)->generate($payload['name'], $payload['id'], $data),
-            'dirtyInputs' => $instance->getDirtyProperties(),
-            'children' => $instance->getRenderedChildren(),
-            'eventQueue' => $eventQueue,
-            'events' => $events,
-            'data' => $data,
-            'redirectTo' => isset($instance->redirectTo) ? $instance->redirectTo : false,
-            'fromPrefetch' => isset($payload['fromPrefetch']) ? $payload['fromPrefetch'] : false,
-            'gc' => ComponentCacheManager::garbageCollect($payload['gc']),
         ]);
 
-        if (empty($instance->redirectTo)) {
-            session()->forget(session()->get('_flash.new'));
-        }
+        Livewire::dehydrate($instance, $response);
 
         return $response;
     }
@@ -58,11 +42,6 @@ abstract class ConnectionHandler
     public function processMessage($type, $data, $instance)
     {
         switch ($type) {
-            case 'syncInput':
-                $instance->updating($data['name'], $data['value']);
-                $instance->syncInput($data['name'], $data['value']);
-                $instance->updated($data['name'], $data['value']);
-                break;
             case 'callMethod':
                 $instance->callMethod($data['method'], $data['params']);
                 break;
@@ -70,32 +49,12 @@ abstract class ConnectionHandler
                 $instance->fireEvent($data['event'], $data['params']);
                 break;
             default:
-                throw new \Exception('Unrecongnized message type: '.$type);
                 break;
         }
     }
 
-    protected function interceptRedirects($instance, $callback)
+    public function interceptValidator($validator)
     {
-        $redirector = app('redirect');
-
-        app()->bind('redirect', function () use ($instance) {
-            return app(Redirector::class)->component($instance);
-        });
-
-        $callback();
-
-        app()->instance('redirect', $redirector);
-    }
-
-    protected function prioritizeInputSyncing($actionQueue)
-    {
-        // Put all the "syncInput" actions first.
-        usort($actionQueue, function ($a, $b) {
-            return $a['type'] !== 'syncInput' && $b['type'] === 'syncInput'
-                ? 1 : 0;
-        });
-
-        return $actionQueue;
+        //
     }
 }

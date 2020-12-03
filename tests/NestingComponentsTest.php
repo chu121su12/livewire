@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class NestingComponentsTest extends TestCase
@@ -13,8 +14,8 @@ class NestingComponentsTest extends TestCase
         app('livewire')->component('child', ChildComponentForNestingStub::class);
         $component = app('livewire')->test('parent');
 
-        $this->assertTrue(str_contains(
-            $component->dom,
+        $this->assertTrue(Str::contains(
+            $component->payload['dom'],
             'foo'
         ));
     }
@@ -26,15 +27,15 @@ class NestingComponentsTest extends TestCase
         app('livewire')->component('child', ChildComponentForNestingStub::class);
         $component = app('livewire')->test('parent');
 
-        $this->assertTrue(str_contains(
-            $component->dom,
+        $this->assertTrue(Str::contains(
+            $component->payload['dom'],
             'foo'
         ));
 
         $component->runAction('$refresh');
 
-        $this->assertFalse(str_contains(
-            $component->dom,
+        $this->assertFalse(Str::contains(
+            $component->payload['dom'],
             'foo'
         ));
     }
@@ -46,15 +47,15 @@ class NestingComponentsTest extends TestCase
         app('livewire')->component('child', ChildComponentForNestingStub::class);
         $component = app('livewire')->test('parent');
 
-        $this->assertTrue(str_contains(
-            $component->dom,
+        $this->assertTrue(Str::contains(
+            $component->payload['dom'],
             'span'
         ));
 
         $component->runAction('$refresh');
 
-        $this->assertTrue(str_contains(
-            $component->dom,
+        $this->assertTrue(Str::contains(
+            $component->payload['dom'],
             'span'
         ));
     }
@@ -66,25 +67,25 @@ class NestingComponentsTest extends TestCase
         app('livewire')->component('child', ChildComponentForNestingStub::class);
         $component = app('livewire')->test('parent');
 
-        $this->assertTrue(str_contains($component->dom, 'foo'));
+        $this->assertTrue(Str::contains($component->payload['dom'], 'foo'));
 
         $component->runAction('setChildren', ['foo', 'bar']);
-        $this->assertFalse(str_contains($component->dom, 'foo'));
-        $this->assertTrue(str_contains($component->dom, 'bar'));
+        $this->assertFalse(Str::contains($component->payload['dom'], 'foo'));
+        $this->assertTrue(Str::contains($component->payload['dom'], 'bar'));
 
         $component->runAction('setChildren', ['foo', 'bar']);
-        $this->assertFalse(str_contains($component->dom, 'foo'));
-        $this->assertFalse(str_contains($component->dom, 'bar'));
+        $this->assertFalse(Str::contains($component->payload['dom'], 'foo'));
+        $this->assertFalse(Str::contains($component->payload['dom'], 'bar'));
     }
 }
 
 class ParentComponentForNestingChildStub extends Component
 {
-    public $child = 'foo';
-
     public function render()
     {
-        return app('view')->make('show-child');
+        return app('view')->make('show-child', [
+            'child' => 'foo',
+        ]);
     }
 }
 
@@ -99,7 +100,9 @@ class ParentComponentForNestingChildrenStub extends Component
 
     public function render()
     {
-        return app('view')->make('show-children');
+        return app('view')->make('show-children', [
+            'children' => $this->children,
+        ]);
     }
 }
 
@@ -114,6 +117,6 @@ class ChildComponentForNestingStub extends Component
 
     public function render()
     {
-        return app('view')->make('show-name');
+        return app('view')->make('show-name-with-this');
     }
 }

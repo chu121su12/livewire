@@ -10,10 +10,10 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class LivewireComponentsFinder
 {
-    protected $files;
     protected $path;
-    protected $manifestPath;
+    protected $files;
     protected $manifest;
+    protected $manifestPath;
 
     public function __construct(Filesystem $files, $manifestPath, $path)
     {
@@ -50,6 +50,8 @@ class LivewireComponentsFinder
             })->toArray();
 
         $this->write($this->manifest);
+
+        return $this;
     }
 
     protected function write(array $manifest)
@@ -66,10 +68,11 @@ class LivewireComponentsFinder
         return collect($this->files->allFiles($this->path))
             ->map(function (SplFileInfo $file) {
                 return app()->getNamespace().str_replace(
-                        ['/', '.php'],
-                        ['\\', ''],
-                        Str::after($file->getPathname(), app_path().DIRECTORY_SEPARATOR)
-                    );
+                    ['/', '.php'],
+                    ['\\', ''],
+                    Str::after($file->getPathname(), app_path().DIRECTORY_SEPARATOR)
+                    // Str::after($file->getPathname(), app_path().'/')
+                );
             })
             ->filter(function ($class) {
                 $class = cast_to_string($class);

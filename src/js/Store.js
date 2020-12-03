@@ -1,14 +1,15 @@
 import EventAction from "@/action/event";
 import HookManager from "@/HookManager";
+import DirectiveManager from "@/DirectiveManager";
+import MessageBus from "./MessageBus";
 
 const store = {
     componentsById: {},
-    listeners: {},
-    beforeDomUpdateCallback: () => {},
-    afterDomUpdateCallback: () => {},
+    listeners: new MessageBus,
     livewireIsInBackground: false,
     livewireIsOffline: false,
     hooks: HookManager,
+    directives: DirectiveManager,
 
     components() {
         return Object.keys(this.componentsById).map(key => {
@@ -35,17 +36,11 @@ const store = {
     },
 
     on(event, callback) {
-        if (this.listeners[event] !== undefined) {
-            this.listeners[event].push(callback)
-        } else {
-            this.listeners[event] = [callback]
-        }
+        this.listeners.register(event, callback)
     },
 
     emit(event, ...params) {
-        if (this.listeners[event] !== undefined) {
-            this.listeners[event].forEach(callback => callback(...params))
-        }
+        this.listeners.call(event, ...params)
 
         this.componentsListeningForEvent(event).forEach(
             component => component.addAction(new EventAction(
@@ -54,10 +49,39 @@ const store = {
         )
     },
 
+    emitUp(el, event, ...params) {
+        this.componentsListeningForEventThatAreTreeAncestors(el, event).forEach(
+            component => component.addAction(new EventAction(
+                event, params
+            ))
+        )
+    },
+
+    componentsListeningForEventThatAreTreeAncestors(el, event) {
+        var parentIds = []
+
+        var parent = el.rawNode().parentElement.closest('[wire\\:id]')
+
+        while (parent) {
+            parentIds.push(parent.getAttribute('wire:id'))
+
+            parent = parent.parentElement.closest('[wire\\:id]')
+        }
+
+        return this.components().filter(component => {
+            return component.events.includes(event)
+                && parentIds.includes(component.id)
+        })
+    },
+
     componentsListeningForEvent(event) {
         return this.components().filter(component => {
             return component.events.includes(event)
         })
+    },
+
+    registerDirective(name, callback) {
+        this.directives.register(name, callback)
     },
 
     registerHook(name, callback) {
@@ -68,52 +92,11 @@ const store = {
         this.hooks.call(name, ...params)
     },
 
-    beforeDomUpdate(callback) {
-        this.beforeDomUpdateCallback = callback
-    },
-
-    afterDomUpdate(callback) {
-        this.afterDomUpdateCallback = callback
-    },
-
     removeComponent(component) {
         // Remove event listeners attached to the DOM.
         component.tearDown()
         // Remove the component from the store.
         delete this.componentsById[component.id]
-        // Add the component the queue for backend cache garbage collection.
-        this.addComponentForCollection(component.id)
-    },
-
-    initializeGarbageCollection()
-    {
-        if (! window.localStorage.hasOwnProperty(this.localStorageKey())) {
-            window.localStorage.setItem(this.localStorageKey(), '')
-        }
-    },
-
-    getComponentsForCollection() {
-        const storedString = atob(window.localStorage.getItem(this.localStorageKey()))
-
-        if (storedString === '') return []
-
-        return storedString.split(',')
-    },
-
-    addComponentForCollection(componentId) {
-        return window.localStorage.setItem(this.localStorageKey(),
-            btoa(this.getComponentsForCollection().concat(componentId).join(','))
-        )
-    },
-
-    setComponentsAsCollected(componentIds) {
-        window.localStorage.setItem(this.localStorageKey(), btoa(this.getComponentsForCollection().filter(
-            id => ! componentIds.includes(id)
-        ).join(',')))
-    },
-
-    localStorageKey() {
-        return 'livewire'
     }
 }
 

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\File;
 
 class MakeCommand extends FileManipulationCommand
 {
-    protected $signature = 'livewire:make {name} {--force}';
+    protected $signature = 'livewire:make {name} {--force} {--stub=default}';
 
     protected $description = 'Create a new Livewire component.';
 
@@ -15,8 +15,15 @@ class MakeCommand extends FileManipulationCommand
         $this->parser = new ComponentParser(
             config('livewire.class_namespace', 'App\\Http\\Livewire'),
             config('livewire.view_path', resource_path('views/livewire')),
-            $this->argument('name')
+            $this->argument('name'),
+            $this->option('stub')
         );
+
+        if($this->isReservedClassName($name = $this->parser->className())) {
+            $this->line("<options=bold,reverse;fg=red> WHOOPS! </> 😳 \n");
+            $this->line("<fg=red;options=bold>Class is reserved:</> {$name}");
+            return;
+        }
 
         $force = $this->option('force');
 
@@ -69,5 +76,10 @@ class MakeCommand extends FileManipulationCommand
         File::put($viewPath, $this->parser->viewContents());
 
         return $viewPath;
+    }
+
+    public function isReservedClassName($name)
+    {
+        return array_search($name, ['Parent', 'Component', 'Interface']) !== false;
     }
 }
