@@ -117,6 +117,7 @@ abstract class Component
         $viewShared = app('view')->getShared();
 
         $previouslySharedErrors = isset($viewShared['errors']) ? $viewShared['errors'] : new ViewErrorBag;
+        $previouslySharedInstance = isset($viewShared['_instance']) ? $viewShared['_instance'] : null;
 
         $errors = (new ViewErrorBag)->put('default', $errorBag);
 
@@ -125,6 +126,7 @@ abstract class Component
         );
 
         app('view')->share('errors', $errors);
+        app('view')->share('_instance', $this);
 
         $view->with([
             'errors' => $errors,
@@ -134,6 +136,7 @@ abstract class Component
         $output = $view->render();
 
         app('view')->share('errors', $previouslySharedErrors);
+        app('view')->share('_instance', $previouslySharedInstance);
 
         Livewire::dispatch('view:render', $view);
 
