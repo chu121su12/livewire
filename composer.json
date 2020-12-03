@@ -44,7 +44,7 @@
         "psr-4": {
             "Orchestra\\Testbench\\": "vendor/laravel/framework/cr/patch/orchestra-testbench-core/testbench-core/src/",
             "PHPUnit\\": "vendor/laravel/framework/cr/patch/phpunit-src/PHPUnit/",
-            "App\\": "vendor/orchestra/testbench-core/laravel/app",
+            "App\\": "vendor/laravel/framework/cr/patch/orchestra-testbench-core/testbench-core/laravel/app",
             "Tests\\": "tests/"
         }
     },

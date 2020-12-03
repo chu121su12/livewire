@@ -11,7 +11,7 @@ class TestCase extends BaseTestCase
 {
     public static $hasRunLivewireTestingSetup = false;
 
-    public function setUp(): void
+    public function setUp()
     {
         $this->afterApplicationCreated(function () {
             if (! static::$hasRunLivewireTestingSetup) {

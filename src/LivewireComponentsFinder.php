@@ -73,7 +73,9 @@ class LivewireComponentsFinder
                         Str::after($file->getPathname(), app_path().DIRECTORY_SEPARATOR)
                     );
             })
-            ->filter(function (string $class) {
+            ->filter(function ($class) {
+                $class = cast_to_string($class);
+
                 return is_subclass_of($class, Component::class) &&
                     ! (new ReflectionClass($class))->isAbstract();
             });

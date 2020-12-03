@@ -35,7 +35,7 @@ abstract class ConnectionHandler
             'eventQueue' => $eventQueue,
             'events' => $events,
             'data' => $data,
-            'redirectTo' => $instance->redirectTo ?? false,
+            'redirectTo' => isset($instance->redirectTo) ? $instance->redirectTo : false,
         ]);
     }
 
