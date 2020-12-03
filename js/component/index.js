@@ -11,6 +11,7 @@ import EchoManager from './EchoManager'
 import UploadManager from './UploadManager'
 import MethodAction from '@/action/method'
 import ModelAction from '@/action/model'
+import DeferredModelAction from '@/action/deferred-model'
 import MessageBus from '../MessageBus'
 
 export default class Component {
@@ -21,6 +22,7 @@ export default class Component {
             this.extractLivewireAttribute('initial-data')
         )
         this.data = initialData.data || {}
+        this.meta = initialData.meta || {}
         this.events = initialData.events || []
         this.children = initialData.children || {}
         this.checksum = initialData.checksum || ''
@@ -31,6 +33,7 @@ export default class Component {
         ;(this.scopedListeners = new MessageBus()),
             (this.connection = connection)
         this.actionQueue = []
+        this.deferredActions = {}
         this.messageInTransit = null
         this.modelTimeout = null
         this.tearDownCallbacks = []
@@ -104,6 +107,12 @@ export default class Component {
     }
 
     addAction(action) {
+        if (action instanceof DeferredModelAction) {
+            this.deferredActions[action.name] = action
+
+            return
+        }
+
         if (
             this.prefetchManager.actionHasPrefetch(action) &&
             this.prefetchManager.actionPrefetchResponseHasBeenReceived(action)
@@ -136,6 +145,11 @@ export default class Component {
 
     fireMessage() {
         if (this.messageInTransit) return
+
+        Object.entries(this.deferredActions).forEach(([modelName, action]) => {
+            this.actionQueue.unshift(action)
+        })
+        this.deferredActions = {}
 
         this.messageInTransit = new Message(this, this.actionQueue)
 
