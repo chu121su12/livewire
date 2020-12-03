@@ -1,5 +1,5 @@
 import { fireEvent, wait } from 'dom-testing-library'
-import { mount, mountAsRoot } from './utils'
+import { mount, mountAsRoot, mountAsRootAndReturn } from './utils'
 const timeout = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 test('basic click', async () => {
@@ -103,58 +103,6 @@ test('keyup.cmd.enter', async () => {
     await timeout(10)
 
     expect(payload).toBeUndefined()
-})
-
-test('polling is disabled if livewire is offline', async () => {
-    var pollHappened = false
-    mount('<div wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
-    window.livewire.components.livewireIsOffline = true
-
-    await timeout(59)
-
-    expect(pollHappened).toBeFalsy()
-
-    // Reset state for other tests.
-    window.livewire.components.livewireIsOffline = false
-})
-
-test('polling without specifying method refreshes by default', async () => {
-    var pollPayload;
-    mount('<div wire:poll.50ms></div>', (i) => { pollPayload = i })
-
-    await timeout(49)
-
-    expect(pollPayload).toBeUndefined()
-
-    await timeout(10)
-
-    expect(pollPayload.actionQueue[0].payload.method).toEqual('$refresh')
-})
-
-test('polling on root div', async () => {
-    var pollHappened = false
-    mountAsRoot('<div wire:id="123" wire:initial-data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
-
-    await timeout(49)
-
-    expect(pollHappened).toBeFalsy()
-
-    await timeout(10)
-
-    expect(pollHappened).toBeTruthy()
-})
-
-test('polling is disabled if ', async () => {
-    var pollHappened = false
-    mountAsRoot('<div wire:id="123" wire:initial-data="{}" wire:poll.50ms="someMethod"></div>', () => { pollHappened = true })
-
-    await timeout(49)
-
-    expect(pollHappened).toBeFalsy()
-
-    await timeout(10)
-
-    expect(pollHappened).toBeTruthy()
 })
 
 test('init', async () => {
@@ -295,5 +243,59 @@ test('action parameter can use double-quotes', async () => {
         expect(payload.actionQueue[0].type).toEqual('callMethod')
         expect(payload.actionQueue[0].payload.method).toEqual('callSomething')
         expect(payload.actionQueue[0].payload.params).toEqual(['double-quotes are ugly', true])
+    })
+})
+
+test('debounce keyup event', async () => {
+    var payload
+    mount('<input wire:keyup.debounce.50ms="someMethod"></button>', i => payload = i)
+
+    fireEvent.keyUp(document.querySelector('input'), { key: 'x' })
+
+    await timeout(1)
+
+    expect(payload).toEqual(undefined)
+
+    await timeout(60)
+
+    expect(payload.actionQueue[0].payload.method).toEqual('someMethod')
+})
+
+test('debounce keyup event with key specified', async () => {
+    var payload
+    mount('<input wire:keyup.x.debounce.50ms="someMethod"></button>', i => payload = i)
+
+    fireEvent.keyUp(document.querySelector('input'), { key: 'k' })
+
+    await timeout(5)
+
+    expect(payload).toEqual(undefined)
+
+    await timeout(60)
+
+    expect(payload).toEqual(undefined)
+
+    fireEvent.keyUp(document.querySelector('input'), { key: 'x' })
+
+    await timeout(5)
+
+    expect(payload).toEqual(undefined)
+
+    await timeout(60)
+
+    expect(payload.actionQueue[0].payload.method).toEqual('someMethod')
+})
+
+test('keydown event', async () => {
+    var payload
+    mount('<input wire:keydown="someMethod"></button>', i => payload = i)
+
+    fireEvent.keyDown(document.querySelector('input'), { key: 'x' })
+
+    await wait(() => {
+
+        expect(payload.actionQueue[0].type).toEqual('callMethod')
+        expect(payload.actionQueue[0].payload.method).toEqual('someMethod')
+        expect(payload.actionQueue[0].payload.params).toEqual([])
     })
 })
