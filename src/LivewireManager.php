@@ -185,7 +185,7 @@ HTML;
             $devTools = 'window.livewire.devTools(true);';
         }
 
-        $appUrl = config('livewire.asset_url', rtrim($options['asset_url'] ?? '', '/'));
+        $appUrl = config('livewire.asset_url', rtrim(isset($options['asset_url']) ? $options['asset_url'] : '', '/'));
 
         $csrf = csrf_token();
 

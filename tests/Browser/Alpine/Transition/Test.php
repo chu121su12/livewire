@@ -8,7 +8,7 @@ use Tests\Browser\TestCase;
 
 class Test extends TestCase
 {
-    public function setUp(): void
+    public function setUp()
     {
         parent::setUp();
 
