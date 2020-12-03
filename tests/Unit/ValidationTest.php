@@ -432,6 +432,7 @@ class ForValidation extends Component
     {
         $this->validate([
             'password' => 'same:passwordConfirmation',
+            'passwordConfirmation' => 'required', // TODO: why?
         ]);
     }
 
