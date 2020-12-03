@@ -96,7 +96,7 @@ trait ValidatesInput
 
     public function validate($rules = null, $messages = [], $attributes = [])
     {
-        [$rules, $messages] = $this->providedOrGlobalRulesAndMessages($rules, $messages);
+        list($rules, $messages) = $this->providedOrGlobalRulesAndMessages($rules, $messages);
 
         $data = $this->prepareForValidation(
             $this->getDataForValidation($rules)
@@ -115,7 +115,7 @@ trait ValidatesInput
 
     public function validateOnly($field, $rules = null, $messages = [], $attributes = [])
     {
-        [$rules, $messages] = $this->providedOrGlobalRulesAndMessages($rules, $messages);
+        list($rules, $messages) = $this->providedOrGlobalRulesAndMessages($rules, $messages);
 
         // If the field is "items.0.foo", we should apply the validation rule for "items.*.foo".
         $rulesForField = collect($rules)->filter(function ($rule, $fullFieldKey) use ($field) {

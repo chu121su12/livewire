@@ -333,7 +333,7 @@ class ForLifecycleHooks extends Component
         $expected = array_shift($this->expected['updatingBarBaz']);
         $expected_key = array_keys($expected)[0];
         $expected_value = $expected[$expected_key];
-        [$before, $after] = $expected_value;
+        list($before, $after) = $expected_value;
 
         PHPUnit::assertEquals($expected_key, $key);
         PHPUnit::assertEquals($before, data_get($this->bar, $key));
