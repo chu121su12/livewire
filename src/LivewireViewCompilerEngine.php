@@ -4,7 +4,6 @@ namespace Livewire;
 
 use Exception;
 use Throwable;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
 
 class LivewireViewCompilerEngine extends CompilerEngine
 {
@@ -53,7 +52,7 @@ class LivewireViewCompilerEngine extends CompilerEngine
         } catch (\Error $e) {
             $this->handleViewException(new FatalThrowableError($e), $obLevel);
         } catch (Throwable $e) {
-            $this->handleViewException(new FatalThrowableError($e), $obLevel);
+            $this->handleViewException($e, $obLevel);
         }
 
         return ltrim(ob_get_clean());
