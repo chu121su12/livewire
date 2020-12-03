@@ -49,11 +49,16 @@ trait HandlesActions
         $beforeMethod = 'updating'.$propertyName;
         $afterMethod = 'updated'.$propertyName;
 
+
+        $this->updating($name, $value);
+
         if (method_exists($this, $beforeMethod)) {
             $this->{$beforeMethod}($value, $keyAfterFirstDot);
         }
 
         $callback($name, $value);
+
+        $this->updated($name, $value);
 
         if (method_exists($this, $afterMethod)) {
             $this->{$afterMethod}($value, $keyAfterFirstDot);
@@ -106,11 +111,15 @@ trait HandlesActions
                     return app($class->name);
                 }
 
-                return app($parameter->name);
-            }, function () use (&$params) {
+                throw new \Exception;
+            }, function () use (&$params, $parameter) {
+                if (count($params) === 0 && $parameter->isDefaultValueAvailable()) {
+                    return $parameter->getDefaultValue();
+                }
+
                 return array_shift($params);
             }, false);
-        });
+        })->concat($params);
     }
 
     protected function methodIsPublicAndNotDefinedOnBaseClass($methodName)

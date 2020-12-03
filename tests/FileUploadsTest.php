@@ -53,6 +53,100 @@ class FileUploadsTest extends TestCase
     }
 
     /** @test */
+    public function can_remove_a_file_property()
+    {
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $component = Livewire::test(FileUploadComponent::class)
+            ->set('photo', $file);
+
+        $tmpFilename = $component->viewData('photo')->getFilename();
+
+        $component->call('removeUpload', 'photo', $tmpFilename)
+            ->assertEmitted('upload:removed', 'photo', $tmpFilename)
+            ->assertSet('photo', null);
+    }
+
+    /** @test */
+    public function can_remove_a_file_from_an_array_of_files_property()
+    {
+        $file1 = UploadedFile::fake()->image('avatar1.jpg');
+        $file2 = UploadedFile::fake()->image('avatar2.jpg');
+
+        $component = Livewire::test(FileUploadComponent::class)
+            ->set('photos', [$file1, $file2]);
+
+        $tmpFiles = $component->viewData('photos');
+
+        $component->call('removeUpload', 'photos', $tmpFiles[1]->getFilename())
+            ->assertEmitted('upload:removed', 'photos', $tmpFiles[1]->getFilename());
+
+        $tmpFiles = $component->call('$refresh')->viewData('photos');
+
+        $this->assertCount(1, $tmpFiles);
+    }
+
+    /** @test */
+    public function if_the_file_property_is_an_array_the_uploaded_file_will_append_to_the_array()
+    {
+        Storage::fake('avatars');
+
+        $file1 = UploadedFile::fake()->image('avatar1.jpg');
+        $file2 = UploadedFile::fake()->image('avatar2.jpg');
+
+        Livewire::test(FileUploadComponent::class)
+            ->set('photosArray', $file1)
+            ->set('photosArray', $file2)
+            ->call('uploadPhotosArray', 'uploaded-avatar');
+
+        Storage::disk('avatars')->assertExists('uploaded-avatar1.png');
+        Storage::disk('avatars')->assertExists('uploaded-avatar2.png');
+    }
+
+    /** @test */
+    public function storing_a_file_returns_its_filename()
+    {
+        Storage::fake('avatars');
+
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $storedFilename = Livewire::test(FileUploadComponent::class)
+            ->set('photo', $file)
+            ->call('uploadAndSetStoredFilename')
+            ->get('storedFilename');
+
+        Storage::disk('avatars')->assertExists($storedFilename);
+    }
+
+    /** @test */
+    public function can_get_a_file_original_name()
+    {
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $component = Livewire::test(FileUploadComponent::class)
+            ->set('photo', $file);
+
+        $tmpFile = $component->viewData('photo');
+
+        $this->assertEquals('avatar.jpg', $tmpFile->getClientOriginalName());
+    }
+
+    /** @test */
+    public function can_get_multiple_files_original_name()
+    {
+        $file1 = UploadedFile::fake()->image('avatar1.jpg');
+        $file2 = UploadedFile::fake()->image('avatar2.jpg');
+
+        $component = Livewire::test(FileUploadComponent::class)
+            ->set('photos', [$file1, $file2]);
+
+        $tmpFiles = $component->viewData('photos');
+
+        $this->assertEquals('avatar1.jpg', $tmpFiles[0]->getClientOriginalName());
+        $this->assertEquals('avatar2.jpg', $tmpFiles[1]->getClientOriginalName());
+    }
+
+    /** @test */
     public function can_set_a_file_as_a_property_using_the_s3_driver_and_store_it()
     {
         config()->set('livewire.temporary_file_upload.disk', 's3');
@@ -194,7 +288,6 @@ class FileUploadsTest extends TestCase
     /** @test */
     public function temporary_files_older_than_24_hours_are_cleaned_up_on_every_new_upload()
     {
-
         Storage::fake('avatars');
 
         $file = UploadedFile::fake()->image('avatar.jpg');
@@ -260,7 +353,9 @@ class FileUploadsTest extends TestCase
     public function S3_can_be_configured_so_that_temporary_files_older_than_24_hours_are_cleaned_up_automatically()
     {
         $this->artisan('livewire:configure-s3-upload-cleanup');
+
         // Can't "really" test this without using a live S3 bucket.
+        $this->assertTrue(true);
     }
 
     /** @test */
@@ -385,6 +480,8 @@ class FileUploadComponent extends Component
 
     public $photo;
     public $photos;
+    public $photosArray = [];
+    public $storedFilename;
 
     public function updatedPhoto()
     {
@@ -408,6 +505,20 @@ class FileUploadComponent extends Component
         foreach ($this->photos as $photo) {
             $photo->storeAs('/', $baseName.$number++.'.png', $disk = 'avatars');
         }
+    }
+
+    public function uploadPhotosArray($baseName)
+    {
+        $number = 1;
+
+        foreach ($this->photosArray as $photo) {
+            $photo->storeAs('/', $baseName.$number++.'.png', $disk = 'avatars');
+        }
+    }
+
+    public function uploadAndSetStoredFilename()
+    {
+        $this->storedFilename = $this->photo->store('/', $disk = 'avatars');
     }
 
     public function uploadDangerous()
