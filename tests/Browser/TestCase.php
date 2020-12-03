@@ -74,6 +74,7 @@ class TestCase extends BaseTestCase
             app('livewire')->component(\Tests\Browser\FileDownloads\Component::class);
             app('livewire')->component(\Tests\Browser\Redirects\Component::class);
             app('livewire')->component(\Tests\Browser\SupportCollections\Component::class);
+            app('livewire')->component(\Tests\Browser\SupportStringables\Component::class);
             app('livewire')->component(\Tests\Browser\Events\Component::class);
             app('livewire')->component(\Tests\Browser\Events\NestedComponentA::class);
             app('livewire')->component(\Tests\Browser\Events\NestedComponentB::class);
@@ -89,6 +90,7 @@ class TestCase extends BaseTestCase
             app('livewire')->component(\Tests\Browser\Dirty\Component::class);
             app('livewire')->component(\Tests\Browser\Alpine\Component::class);
             app('livewire')->component(\Tests\Browser\Alpine\SmallComponent::class);
+            app('livewire')->component(\Tests\Browser\Alpine\Entangle\Component::class);
             app('livewire')->component(\Tests\Browser\Hooks\Component::class);
             app('livewire')->component(\Tests\Browser\Ignore\Component::class);
             app('livewire')->component(\Tests\Browser\Morphdom\Component::class);
@@ -103,6 +105,8 @@ class TestCase extends BaseTestCase
             app('livewire')->component(\Tests\Browser\SyncHistory\ChildComponent::class);
             app('livewire')->component(\Tests\Browser\SyncHistory\SingleRadioComponent::class);
             app('livewire')->component(\Tests\Browser\SyncHistory\ComponentWithMount::class);
+            app('livewire')->component(\Tests\Browser\SyncHistory\ComponentWithoutQueryString::class);
+            app('livewire')->component(\Tests\Browser\SyncHistory\ComponentWithAlpineEntangle::class);
             app('livewire')->component(\Tests\Browser\Pagination\Tailwind::class);
             app('livewire')->component(\Tests\Browser\Pagination\Bootstrap::class);
 
@@ -117,6 +121,10 @@ class TestCase extends BaseTestCase
                 '/livewire-dusk/tests/browser/sync-history/{step}',
                 \Tests\Browser\SyncHistory\Component::class
             )->middleware('web')->name('sync-history');
+
+            Route::get('/livewire-dusk/tests/browser/sync-history-without-query-string/{step}',
+                \Tests\Browser\SyncHistory\ComponentWithoutQueryString::class
+            )->middleware('web')->name('sync-history-without-query-string');
 
             app('session')->put('_token', 'this-is-a-hack-because-something-about-validating-the-csrf-token-is-broken');
 
