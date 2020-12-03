@@ -121,21 +121,40 @@ abstract class Component
             return $data;
         }
 
-        $normalizedData = $data;
+        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+            $normalizedData = [];
 
-        // Make sure string keys are last (but not ordered). JSON.parse will do this.
-        uksort($normalizedData, function ($a, $b) {
-            return is_string($a) && is_numeric($b)
-                ? 1
-                : 0;
-        });
+            foreach ($data as $key => $value) {
+                if (is_numeric($key)) {
+                    $normalizedData[$key] = $value;
+                }
+            }
 
-        // Order numeric indexes.
-        uksort($normalizedData, function ($a, $b) {
-            return is_numeric($a) && is_numeric($b)
-                ? $a > $b
-                : 0;
-        });
+            ksort($normalizedData);
+
+            foreach ($data as $key => $value) {
+                if (! is_numeric($key)) {
+                    $normalizedData[$key] = $value;
+                }
+            }
+
+        } else {
+            $normalizedData = $data;
+
+            // Make sure string keys are last (but not ordered). JSON.parse will do this.
+            uksort($normalizedData, function ($a, $b) {
+                return is_string($a) && is_numeric($b)
+                    ? 1
+                    : 0;
+            });
+
+            // Order numeric indexes.
+            uksort($normalizedData, function ($a, $b) {
+                return is_numeric($a) && is_numeric($b)
+                    ? $a > $b
+                    : 0;
+            });
+        }
 
         return array_map(function ($value) {
             return $this->reindexArraysWithNumericKeysOtherwiseJavaScriptWillMessWithTheOrder($value);
