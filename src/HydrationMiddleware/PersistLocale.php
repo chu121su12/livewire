@@ -8,7 +8,7 @@ class PersistLocale implements HydrationMiddleware
 {
     public static function hydrate($unHydratedInstance, $request)
     {
-        if ($request['locale'] ?? null) {
+        if (isset($request['locale']) ? $request['locale'] : null) {
             App::setLocale($request['locale']);
         }
     }

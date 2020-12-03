@@ -18,6 +18,13 @@ class LivewireDirectivesTest_can_assert_see_livewire_on_standard_blade_view {
             }
         };
 
+class LivewireDirectivesTest_can_assert_dont_see_livewire_on_standard_blade_view {
+            public function getContent()
+            {
+                return view('null-view')->render();
+            }
+        };
+
 class LivewireDirectivesTest extends TestCase
 {
     /** @test */
@@ -51,12 +58,7 @@ class LivewireDirectivesTest extends TestCase
     /** @test */
     public function can_assert_dont_see_livewire_on_standard_blade_view()
     {
-        $fakeClass = new class {
-            public function getContent()
-            {
-                return view('null-view')->render();
-            }
-        };
+        $fakeClass = new LivewireDirectivesTest_can_assert_dont_see_livewire_on_standard_blade_view;
 
         if (Application::VERSION === '7.x-dev' || version_compare(Application::VERSION, '7.0', '>=')) {
             $testResponse = new Laravel7TestResponse($fakeClass);

@@ -103,7 +103,8 @@ trait WithFileUploads
         if ($value instanceof TemporaryUploadedFile) {
             return $value->serializeForLivewireResponse();
         } elseif (is_array($value) && isset(array_values($value)[0]) && array_values($value)[0] instanceof TemporaryUploadedFile) {
-            return array_values($value)[0]::serializeMultipleForLivewireResponse($value);
+            $arrayValue = array_values($value)[0];
+            return $arrayValue::serializeMultipleForLivewireResponse($value);
         }
 
         return $value;

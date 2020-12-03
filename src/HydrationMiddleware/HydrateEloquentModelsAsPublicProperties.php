@@ -64,7 +64,7 @@ class HydrateEloquentModelsAsPublicProperties implements HydrationMiddleware
 
         return new $collectionClass(
             collect($value->id)->map(function ($id) use ($collection) {
-                return $collection[$id] ?? null;
+                return isset($collection[$id]) ? $collection[$id] : null;
             })->filter()
         );
     }
