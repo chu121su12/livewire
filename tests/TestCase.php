@@ -2,23 +2,21 @@
 
 namespace Tests;
 
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Livewire\LivewireServiceProvider;
+use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-    public static $hasRunLivewireTestingSetup = false;
-
     public function setUp()
     {
         $this->afterApplicationCreated(function () {
-            if (! static::$hasRunLivewireTestingSetup) {
-                $this->makeACleanSlate();
+            $this->makeACleanSlate();
+        });
 
-                static::$hasRunLivewireTestingSetup = true;
-            }
+        $this->beforeApplicationDestroyed(function () {
+            $this->makeACleanSlate();
         });
 
         parent::setUp();
@@ -30,6 +28,7 @@ class TestCase extends BaseTestCase
 
         File::deleteDirectory($this->livewireViewsPath());
         File::deleteDirectory($this->livewireClassesPath());
+        File::delete(app()->bootstrapPath('cache/livewire-components.php'));
     }
 
     protected function getPackageProviders($app)
@@ -41,17 +40,26 @@ class TestCase extends BaseTestCase
 
     protected function getEnvironmentSetUp($app)
     {
-        $app['config']->set('view.paths', [__DIR__.'/views']);
+        $app['config']->set('view.paths', [
+            __DIR__.'/views',
+            resource_path('views'),
+        ]);
+
         $app['config']->set('app.key', 'base64:Hupx3yAySikrM2/edkZQNQHslgDWYfiBfCuSThJ5SK8=');
+    }
+
+    protected function resolveApplicationHttpKernel($app)
+    {
+        $app->singleton('Illuminate\Contracts\Http\Kernel', 'Tests\HttpKernel');
     }
 
     protected function livewireClassesPath($path = '')
     {
-        return app_path('Http/Livewire' . ($path ? '/'.$path : ''));
+        return app_path('Http/Livewire'.($path ? '/'.$path : ''));
     }
 
     protected function livewireViewsPath($path = '')
     {
-        return config('view.paths')[0].'/livewire' . ($path ? '/'.$path : '');
+        return resource_path('views').'/livewire'.($path ? '/'.$path : '');
     }
 }

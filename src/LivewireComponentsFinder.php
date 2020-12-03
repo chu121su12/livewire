@@ -39,14 +39,14 @@ class LivewireComponentsFinder
             $this->build();
         }
 
-        return $this->manifest =  $this->files->getRequire($this->manifestPath);
+        return $this->manifest = $this->files->getRequire($this->manifestPath);
     }
 
     public function build()
     {
         $this->manifest = $this->getClassNames()
             ->mapWithKeys(function ($class) {
-                return [(new $class)->name() => $class];
+                return [(new $class('dummy-id'))->getName() => $class];
             })->toArray();
 
         $this->write($this->manifest);
@@ -58,9 +58,7 @@ class LivewireComponentsFinder
             throw new Exception('The '.dirname($this->manifestPath).' directory must be present and writable.');
         }
 
-        $this->files->replace(
-            $this->manifestPath, '<?php return '.var_export($manifest, true).';'
-        );
+        $this->files->put($this->manifestPath, '<?php return '.var_export($manifest, true).';', true);
     }
 
     public function getClassNames()
@@ -70,7 +68,7 @@ class LivewireComponentsFinder
                 return app()->getNamespace().str_replace(
                         ['/', '.php'],
                         ['\\', ''],
-                        Str::after($file->getPathname(), app_path().DIRECTORY_SEPARATOR)
+                        Str::after($file->getPathname(), app_path().'/')
                     );
             })
             ->filter(function ($class) {

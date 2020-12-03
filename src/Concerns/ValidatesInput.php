@@ -11,15 +11,18 @@ trait ValidatesInput
     {
         $fields = array_keys($rules);
 
-        $result = [];
+        $result = $this->getPublicPropertiesDefinedBySubClass();
 
         foreach ((array) $fields as $field) {
             throw_unless(
                 $this->hasProperty($field),
-                new \Exception('No property found for validation: [' . $field . ']')
+                new \Exception('No property found for validation: ['.$field.']')
             );
 
-            $result[$this->beforeFirstDot($field)] = $this->getPropertyValue($field);
+            $propertyNameFromValidationField = $this->beforeFirstDot($field);
+
+            $result[$propertyNameFromValidationField]
+                = $this->getPropertyValue($propertyNameFromValidationField);
         }
 
         return Validator::make($result, Arr::only($rules, $fields), $messages, $attributes)

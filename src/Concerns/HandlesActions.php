@@ -4,6 +4,7 @@ namespace Livewire\Concerns;
 
 use Illuminate\Support\Str;
 use Livewire\Exceptions\NonPublicComponentMethodCall;
+use Livewire\Exceptions\MissingComponentMethodReferencedByAction;
 
 trait HandlesActions
 {
@@ -18,8 +19,8 @@ trait HandlesActions
 
     protected function callBeforeAndAferSyncHooks($name, $value, $callback)
     {
-        $beforeMethod = 'updating' . Str::studly($name);
-        $afterMethod = 'updated' . Str::studly($name);
+        $beforeMethod = 'updating'.Str::studly($name);
+        $afterMethod = 'updated'.Str::studly($name);
 
         if (method_exists($this, $beforeMethod)) {
             $this->{$beforeMethod}($value);
@@ -38,12 +39,14 @@ trait HandlesActions
             case '$set':
                 $prop = array_shift($params);
                 $this->syncInput($prop, head($params));
+
                 return;
                 break;
 
             case '$toggle':
                 $prop = array_shift($params);
                 $this->syncInput($prop, ! $this->{$prop});
+
                 return;
                 break;
 
@@ -52,11 +55,30 @@ trait HandlesActions
                 break;
 
             default:
+                throw_unless(method_exists($this, $method), MissingComponentMethodReferencedByAction::class);
                 throw_unless($this->methodIsPublicAndNotDefinedOnBaseClass($method), NonPublicComponentMethodCall::class);
 
-                $this->{$method}(...$params);
+                $this->{$method}(
+                    ...$this->resolveActionParameters($method, $params)
+                );
+
                 break;
         }
+    }
+
+    protected function resolveActionParameters($method, $params)
+    {
+        return collect((new \ReflectionMethod($this, $method))->getParameters())->map(function ($parameter) use (&$params) {
+            return rescue(function () use ($parameter) {
+                if ($class = $parameter->getClass()) {
+                    return app($class->name);
+                }
+
+                return app($parameter->name);
+            }, function () use (&$params) {
+                return array_shift($params);
+            }, false);
+        });
     }
 
     protected function methodIsPublicAndNotDefinedOnBaseClass($methodName)

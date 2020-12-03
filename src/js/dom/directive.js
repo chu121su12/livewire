@@ -30,8 +30,8 @@ export default class {
 
     durationOr(defaultDuration) {
         let durationInMilliSeconds
-        const durationInMilliSecondsString = this.modifiers.find(mod => mod.match(/(.*)ms/))
-        const durationInSecondsString = this.modifiers.find(mod => mod.match(/(.*)s/))
+        const durationInMilliSecondsString = this.modifiers.find(mod => mod.match(/([0-9]+)ms/))
+        const durationInSecondsString = this.modifiers.find(mod => mod.match(/([0-9]+)s/))
 
         if (durationInMilliSecondsString) {
             durationInMilliSeconds = Number(durationInMilliSecondsString.replace('ms', ''))
@@ -45,7 +45,7 @@ export default class {
     parseOutMethodAndParams(rawMethod) {
         let method = rawMethod
         let params = []
-        const methodAndParamString = method.match(/(.*)\((.*)\)/)
+        const methodAndParamString = method.match(/(.*?)\((.*)\)/)
 
         if (methodAndParamString) {
             // This "$event" is for use inside the livewire event handler.
@@ -55,5 +55,13 @@ export default class {
         }
 
         return { method, params }
+    }
+
+    cardinalDirectionOr(fallback = 'right') {
+        if (this.modifiers.includes('up')) return 'up'
+        if (this.modifiers.includes('down')) return 'down'
+        if (this.modifiers.includes('left')) return 'left'
+        if (this.modifiers.includes('right')) return 'right'
+        return fallback
     }
 }

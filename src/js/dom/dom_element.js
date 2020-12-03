@@ -1,4 +1,5 @@
-import ElementDirectives from "./directive_manager";
+import ElementDirectives from "./directive_manager"
+import get from 'get-value'
 const prefix = require('./prefix.js')()
 
 /**
@@ -31,13 +32,12 @@ export default class DOMElement {
         }
 
         if (directive.modifiers.includes('fade')) {
-            this.el.style.opacity = 0
-            this.el.style.transition = `opacity ${directive.durationOr(300) / 1000}s ease`
+            this.fadeIn(directive)
+            return
+        }
 
-            this.nextFrame(() => {
-                this.el.style.opacity = 1
-            })
-
+        if (directive.modifiers.includes('slide')) {
+            this.slideIn(directive)
             return
         }
 
@@ -67,15 +67,13 @@ export default class DOMElement {
         }
 
         if (directive.modifiers.includes('fade')) {
-            this.nextFrame(() => {
-                this.el.style.opacity = 0
+            this.fadeOut(directive, onDiscarded)
 
-                setTimeout(() => {
-                    onDiscarded(this.el)
+            return false
+        }
 
-                    this.el.remove()
-                }, directive.durationOr(300));
-            })
+        if (directive.modifiers.includes('slide')) {
+            this.slideOut(directive, onDiscarded)
 
             return false
         }
@@ -97,6 +95,65 @@ export default class DOMElement {
         })
 
         return false
+    }
+
+    fadeIn(directive) {
+        this.el.style.opacity = 0
+        this.el.style.transition = `opacity ${directive.durationOr(300) / 1000}s ease`
+
+        this.nextFrame(() => {
+            this.el.style.opacity = 1
+        })
+    }
+
+    slideIn(directive) {
+        const directions = {
+            up: 'translateY(10px)',
+            down: 'translateY(-10px)',
+            left: 'translateX(-10px)',
+            right: 'translateX(10px)',
+        }
+
+        this.el.style.opacity = 0
+        this.el.style.transform = directions[directive.cardinalDirectionOr('right')]
+        this.el.style.transition = `opacity ${directive.durationOr(300) / 1000}s ease, transform ${directive.durationOr(300) / 1000}s ease`
+
+        this.nextFrame(() => {
+            this.el.style.opacity = 1
+            this.el.style.transform = ``
+        })
+    }
+
+    fadeOut(directive, onDiscarded) {
+        this.nextFrame(() => {
+            this.el.style.opacity = 0
+
+            setTimeout(() => {
+                onDiscarded(this.el)
+
+                this.el.remove()
+            }, directive.durationOr(300));
+        })
+    }
+
+    slideOut(directive, onDiscarded) {
+        const directions = {
+            up: 'translateY(10px)',
+            down: 'translateY(-10px)',
+            left: 'translateX(-10px)',
+            right: 'translateX(10px)',
+        }
+
+        this.nextFrame(() => {
+            this.el.style.opacity = 0
+            this.el.style.transform = directions[directive.cardinalDirectionOr('right')]
+
+            setTimeout(() => {
+                onDiscarded(this.el)
+
+                this.el.remove()
+            }, directive.durationOr(300));
+        })
     }
 
     closestRoot() {
@@ -127,6 +184,10 @@ export default class DOMElement {
         return this.el.getAttribute(`${prefix}:${attribute}`)
     }
 
+    removeAttribute(attribute) {
+        return this.el.removeAttribute(`${prefix}:${attribute}`)
+    }
+
     setAttribute(attribute, value) {
         return this.el.setAttribute(`${prefix}:${attribute}`, value)
     }
@@ -139,20 +200,6 @@ export default class DOMElement {
         return this.el === document.activeElement
     }
 
-    preserveValueAttributeIfNotDirty(fromEl, dirtyInputs) {
-        if (this.directives.missing('model')) return
-
-        // If the input is not dirty && the input element is focused, keep the
-        // value the same, but change other attributes.
-        if (
-            ! Array.from(dirtyInputs).includes(this.directives.get('model').value)
-            && fromEl.isFocused()
-        ) {
-            // Transfer the current "fromEl" value (preserving / overriding it).
-            this.setInputValue(fromEl.valueFromInput())
-        }
-    }
-
     isInput() {
         return ['INPUT', 'TEXTAREA', 'SELECT'].includes(this.el.tagName.toUpperCase())
     }
@@ -162,8 +209,21 @@ export default class DOMElement {
             && ! ['checkbox', 'radio'].includes(this.el.type)
     }
 
-    valueFromInput() {
+    valueFromInput(component) {
         if (this.el.type === 'checkbox') {
+            const modelName =  this.directives.get('model').value
+            var modelValue = get(component.data, modelName)
+
+            if (Array.isArray(modelValue)) {
+                if (this.el.checked) {
+                    modelValue = modelValue.includes(this.el.value) ? modelValue : modelValue.concat(this.el.value)
+                } else {
+                    modelValue = modelValue.filter(item => item !== this.el.value)
+                }
+
+                return modelValue
+            }
+
             return this.el.checked
         } else if (this.el.tagName === 'SELECT' && this.el.multiple) {
             return this.getSelectValues()
@@ -174,8 +234,7 @@ export default class DOMElement {
 
     setInputValueFromModel(component) {
         const modelString = this.directives.get('model').value
-        const modelStringWithArraySyntaxForNumericKeys = modelString.replace(/\.([0-9]+)/, (match, num) => { return `[${num}]` })
-        const modelValue = eval('component.data.'+modelStringWithArraySyntaxForNumericKeys)
+        const modelValue = get(component.data, modelString)
         if (modelValue === undefined) return
 
         this.setInputValue(modelValue)
@@ -193,7 +252,13 @@ export default class DOMElement {
         } else if (this.el.type === 'radio') {
             this.el.checked = this.el.value == value
         } else if (this.el.type === 'checkbox') {
-            this.el.checked = !! value
+            if (Array.isArray(value)) {
+                if (value.includes(this.el.value)) {
+                    this.el.checked = true
+                }
+            } else {
+                this.el.checked = !! value
+            }
         } else if (this.el.tagName === 'SELECT') {
             this.updateSelect(value)
         } else {
@@ -204,11 +269,12 @@ export default class DOMElement {
     getSelectValues() {
         return Array.from(this.el.options)
             .filter(option => option.selected)
-            .map(option => { return option.value || option.text})
+            .map(option => { return option.value || option.text })
     }
 
     updateSelect(value) {
-        const arrayWrappedValue = [].concat(value)
+        const arrayWrappedValue = [].concat(value).map(value => { return value +'' })
+
         Array.from(this.el.options).forEach(option => {
             option.selected = arrayWrappedValue.includes(option.value)
         })
@@ -236,6 +302,10 @@ export default class DOMElement {
 
     addEventListener() {
         return this.el.addEventListener(...arguments)
+    }
+
+    removeEventListener() {
+        return this.el.removeEventListener(...arguments)
     }
 
     get classList() {

@@ -16,6 +16,8 @@ class HttpConnectionHandler extends ConnectionHandler
                 'data',
                 'id',
                 'checksum',
+                'fromPrefetch',
+                'gc',
             ])
         );
     }

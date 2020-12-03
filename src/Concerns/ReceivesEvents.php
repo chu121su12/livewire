@@ -2,8 +2,6 @@
 
 namespace Livewire\Concerns;
 
-use Illuminate\Support\Str;
-
 trait ReceivesEvents
 {
     protected $eventQueue = [];
@@ -26,6 +24,7 @@ trait ReceivesEvents
         if (method_exists($this, 'listeners')) {
             return $this->listeners();
         }
+
         return isset($this->listeners) ? $this->listeners : [];
     }
 

@@ -96,6 +96,2354 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/get-value/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/get-value/index.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*!
+ * get-value <https://github.com/jonschlinkert/get-value>
+ *
+ * Copyright (c) 2014-2018, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+const isObject = __webpack_require__(/*! isobject */ "./node_modules/isobject/index.js");
+
+module.exports = function(target, path, options) {
+  if (!isObject(options)) {
+    options = { default: options };
+  }
+
+  if (!isValidObject(target)) {
+    return typeof options.default !== 'undefined' ? options.default : target;
+  }
+
+  if (typeof path === 'number') {
+    path = String(path);
+  }
+
+  const isArray = Array.isArray(path);
+  const isString = typeof path === 'string';
+  const splitChar = options.separator || '.';
+  const joinChar = options.joinChar || (typeof splitChar === 'string' ? splitChar : '.');
+
+  if (!isString && !isArray) {
+    return target;
+  }
+
+  if (isString && path in target) {
+    return isValid(path, target, options) ? target[path] : options.default;
+  }
+
+  let segs = isArray ? path : split(path, splitChar, options);
+  let len = segs.length;
+  let idx = 0;
+
+  do {
+    let prop = segs[idx];
+    if (typeof prop === 'number') {
+      prop = String(prop);
+    }
+
+    while (prop && prop.slice(-1) === '\\') {
+      prop = join([prop.slice(0, -1), segs[++idx] || ''], joinChar, options);
+    }
+
+    if (prop in target) {
+      if (!isValid(prop, target, options)) {
+        return options.default;
+      }
+
+      target = target[prop];
+    } else {
+      let hasProp = false;
+      let n = idx + 1;
+
+      while (n < len) {
+        prop = join([prop, segs[n++]], joinChar, options);
+
+        if ((hasProp = prop in target)) {
+          if (!isValid(prop, target, options)) {
+            return options.default;
+          }
+
+          target = target[prop];
+          idx = n - 1;
+          break;
+        }
+      }
+
+      if (!hasProp) {
+        return options.default;
+      }
+    }
+  } while (++idx < len && isValidObject(target));
+
+  if (idx === len) {
+    return target;
+  }
+
+  return options.default;
+};
+
+function join(segs, joinChar, options) {
+  if (typeof options.join === 'function') {
+    return options.join(segs);
+  }
+  return segs[0] + joinChar + segs[1];
+}
+
+function split(path, splitChar, options) {
+  if (typeof options.split === 'function') {
+    return options.split(path);
+  }
+  return path.split(splitChar);
+}
+
+function isValid(key, target, options) {
+  if (typeof options.isValid === 'function') {
+    return options.isValid(key, target);
+  }
+  return true;
+}
+
+function isValidObject(val) {
+  return isObject(val) || Array.isArray(val) || typeof val === 'function';
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/isobject/index.js":
+/*!****************************************!*\
+  !*** ./node_modules/isobject/index.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*!
+ * isobject <https://github.com/jonschlinkert/isobject>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+
+
+module.exports = function isObject(val) {
+  return val != null && typeof val === 'object' && Array.isArray(val) === false;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/process/browser.js":
+/*!*****************************************!*\
+  !*** ./node_modules/process/browser.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+
+/***/ "./node_modules/promise-polyfill/src/finally.js":
+/*!******************************************************!*\
+  !*** ./node_modules/promise-polyfill/src/finally.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/**
+ * @this {Promise}
+ */
+function finallyConstructor(callback) {
+  var constructor = this.constructor;
+  return this.then(
+    function(value) {
+      // @ts-ignore
+      return constructor.resolve(callback()).then(function() {
+        return value;
+      });
+    },
+    function(reason) {
+      // @ts-ignore
+      return constructor.resolve(callback()).then(function() {
+        // @ts-ignore
+        return constructor.reject(reason);
+      });
+    }
+  );
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (finallyConstructor);
+
+
+/***/ }),
+
+/***/ "./node_modules/promise-polyfill/src/index.js":
+/*!****************************************************!*\
+  !*** ./node_modules/promise-polyfill/src/index.js ***!
+  \****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(setImmediate) {/* harmony import */ var _finally__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./finally */ "./node_modules/promise-polyfill/src/finally.js");
+
+
+// Store setTimeout reference so promise-polyfill will be unaffected by
+// other code modifying setTimeout (like sinon.useFakeTimers())
+var setTimeoutFunc = setTimeout;
+
+function isArray(x) {
+  return Boolean(x && typeof x.length !== 'undefined');
+}
+
+function noop() {}
+
+// Polyfill for Function.prototype.bind
+function bind(fn, thisArg) {
+  return function() {
+    fn.apply(thisArg, arguments);
+  };
+}
+
+/**
+ * @constructor
+ * @param {Function} fn
+ */
+function Promise(fn) {
+  if (!(this instanceof Promise))
+    throw new TypeError('Promises must be constructed via new');
+  if (typeof fn !== 'function') throw new TypeError('not a function');
+  /** @type {!number} */
+  this._state = 0;
+  /** @type {!boolean} */
+  this._handled = false;
+  /** @type {Promise|undefined} */
+  this._value = undefined;
+  /** @type {!Array<!Function>} */
+  this._deferreds = [];
+
+  doResolve(fn, this);
+}
+
+function handle(self, deferred) {
+  while (self._state === 3) {
+    self = self._value;
+  }
+  if (self._state === 0) {
+    self._deferreds.push(deferred);
+    return;
+  }
+  self._handled = true;
+  Promise._immediateFn(function() {
+    var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
+    if (cb === null) {
+      (self._state === 1 ? resolve : reject)(deferred.promise, self._value);
+      return;
+    }
+    var ret;
+    try {
+      ret = cb(self._value);
+    } catch (e) {
+      reject(deferred.promise, e);
+      return;
+    }
+    resolve(deferred.promise, ret);
+  });
+}
+
+function resolve(self, newValue) {
+  try {
+    // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+    if (newValue === self)
+      throw new TypeError('A promise cannot be resolved with itself.');
+    if (
+      newValue &&
+      (typeof newValue === 'object' || typeof newValue === 'function')
+    ) {
+      var then = newValue.then;
+      if (newValue instanceof Promise) {
+        self._state = 3;
+        self._value = newValue;
+        finale(self);
+        return;
+      } else if (typeof then === 'function') {
+        doResolve(bind(then, newValue), self);
+        return;
+      }
+    }
+    self._state = 1;
+    self._value = newValue;
+    finale(self);
+  } catch (e) {
+    reject(self, e);
+  }
+}
+
+function reject(self, newValue) {
+  self._state = 2;
+  self._value = newValue;
+  finale(self);
+}
+
+function finale(self) {
+  if (self._state === 2 && self._deferreds.length === 0) {
+    Promise._immediateFn(function() {
+      if (!self._handled) {
+        Promise._unhandledRejectionFn(self._value);
+      }
+    });
+  }
+
+  for (var i = 0, len = self._deferreds.length; i < len; i++) {
+    handle(self, self._deferreds[i]);
+  }
+  self._deferreds = null;
+}
+
+/**
+ * @constructor
+ */
+function Handler(onFulfilled, onRejected, promise) {
+  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+  this.promise = promise;
+}
+
+/**
+ * Take a potentially misbehaving resolver function and make sure
+ * onFulfilled and onRejected are only called once.
+ *
+ * Makes no guarantees about asynchrony.
+ */
+function doResolve(fn, self) {
+  var done = false;
+  try {
+    fn(
+      function(value) {
+        if (done) return;
+        done = true;
+        resolve(self, value);
+      },
+      function(reason) {
+        if (done) return;
+        done = true;
+        reject(self, reason);
+      }
+    );
+  } catch (ex) {
+    if (done) return;
+    done = true;
+    reject(self, ex);
+  }
+}
+
+Promise.prototype['catch'] = function(onRejected) {
+  return this.then(null, onRejected);
+};
+
+Promise.prototype.then = function(onFulfilled, onRejected) {
+  // @ts-ignore
+  var prom = new this.constructor(noop);
+
+  handle(this, new Handler(onFulfilled, onRejected, prom));
+  return prom;
+};
+
+Promise.prototype['finally'] = _finally__WEBPACK_IMPORTED_MODULE_0__["default"];
+
+Promise.all = function(arr) {
+  return new Promise(function(resolve, reject) {
+    if (!isArray(arr)) {
+      return reject(new TypeError('Promise.all accepts an array'));
+    }
+
+    var args = Array.prototype.slice.call(arr);
+    if (args.length === 0) return resolve([]);
+    var remaining = args.length;
+
+    function res(i, val) {
+      try {
+        if (val && (typeof val === 'object' || typeof val === 'function')) {
+          var then = val.then;
+          if (typeof then === 'function') {
+            then.call(
+              val,
+              function(val) {
+                res(i, val);
+              },
+              reject
+            );
+            return;
+          }
+        }
+        args[i] = val;
+        if (--remaining === 0) {
+          resolve(args);
+        }
+      } catch (ex) {
+        reject(ex);
+      }
+    }
+
+    for (var i = 0; i < args.length; i++) {
+      res(i, args[i]);
+    }
+  });
+};
+
+Promise.resolve = function(value) {
+  if (value && typeof value === 'object' && value.constructor === Promise) {
+    return value;
+  }
+
+  return new Promise(function(resolve) {
+    resolve(value);
+  });
+};
+
+Promise.reject = function(value) {
+  return new Promise(function(resolve, reject) {
+    reject(value);
+  });
+};
+
+Promise.race = function(arr) {
+  return new Promise(function(resolve, reject) {
+    if (!isArray(arr)) {
+      return reject(new TypeError('Promise.race accepts an array'));
+    }
+
+    for (var i = 0, len = arr.length; i < len; i++) {
+      Promise.resolve(arr[i]).then(resolve, reject);
+    }
+  });
+};
+
+// Use polyfill for setImmediate for performance gains
+Promise._immediateFn =
+  // @ts-ignore
+  (typeof setImmediate === 'function' &&
+    function(fn) {
+      // @ts-ignore
+      setImmediate(fn);
+    }) ||
+  function(fn) {
+    setTimeoutFunc(fn, 0);
+  };
+
+Promise._unhandledRejectionFn = function _unhandledRejectionFn(err) {
+  if (typeof console !== 'undefined' && console) {
+    console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (Promise);
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../timers-browserify/main.js */ "./node_modules/timers-browserify/main.js").setImmediate))
+
+/***/ }),
+
+/***/ "./node_modules/promise-polyfill/src/polyfill.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/promise-polyfill/src/polyfill.js ***!
+  \*******************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(global) {/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/promise-polyfill/src/index.js");
+/* harmony import */ var _finally__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./finally */ "./node_modules/promise-polyfill/src/finally.js");
+
+
+
+/** @suppress {undefinedVars} */
+var globalNS = (function() {
+  // the only reliable means to get the global object is
+  // `Function('return this')()`
+  // However, this causes CSP violations in Chrome apps.
+  if (typeof self !== 'undefined') {
+    return self;
+  }
+  if (typeof window !== 'undefined') {
+    return window;
+  }
+  if (typeof global !== 'undefined') {
+    return global;
+  }
+  throw new Error('unable to locate global object');
+})();
+
+if (!('Promise' in globalNS)) {
+  globalNS['Promise'] = _index__WEBPACK_IMPORTED_MODULE_0__["default"];
+} else if (!globalNS.Promise.prototype['finally']) {
+  globalNS.Promise.prototype['finally'] = _finally__WEBPACK_IMPORTED_MODULE_1__["default"];
+}
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/setimmediate/setImmediate.js":
+/*!***************************************************!*\
+  !*** ./node_modules/setimmediate/setImmediate.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+    "use strict";
+
+    if (global.setImmediate) {
+        return;
+    }
+
+    var nextHandle = 1; // Spec says greater than zero
+    var tasksByHandle = {};
+    var currentlyRunningATask = false;
+    var doc = global.document;
+    var registerImmediate;
+
+    function setImmediate(callback) {
+      // Callback can either be a function or a string
+      if (typeof callback !== "function") {
+        callback = new Function("" + callback);
+      }
+      // Copy function arguments
+      var args = new Array(arguments.length - 1);
+      for (var i = 0; i < args.length; i++) {
+          args[i] = arguments[i + 1];
+      }
+      // Store and register the task
+      var task = { callback: callback, args: args };
+      tasksByHandle[nextHandle] = task;
+      registerImmediate(nextHandle);
+      return nextHandle++;
+    }
+
+    function clearImmediate(handle) {
+        delete tasksByHandle[handle];
+    }
+
+    function run(task) {
+        var callback = task.callback;
+        var args = task.args;
+        switch (args.length) {
+        case 0:
+            callback();
+            break;
+        case 1:
+            callback(args[0]);
+            break;
+        case 2:
+            callback(args[0], args[1]);
+            break;
+        case 3:
+            callback(args[0], args[1], args[2]);
+            break;
+        default:
+            callback.apply(undefined, args);
+            break;
+        }
+    }
+
+    function runIfPresent(handle) {
+        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+        // So if we're currently running a task, we'll need to delay this invocation.
+        if (currentlyRunningATask) {
+            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+            // "too much recursion" error.
+            setTimeout(runIfPresent, 0, handle);
+        } else {
+            var task = tasksByHandle[handle];
+            if (task) {
+                currentlyRunningATask = true;
+                try {
+                    run(task);
+                } finally {
+                    clearImmediate(handle);
+                    currentlyRunningATask = false;
+                }
+            }
+        }
+    }
+
+    function installNextTickImplementation() {
+        registerImmediate = function(handle) {
+            process.nextTick(function () { runIfPresent(handle); });
+        };
+    }
+
+    function canUsePostMessage() {
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        if (global.postMessage && !global.importScripts) {
+            var postMessageIsAsynchronous = true;
+            var oldOnMessage = global.onmessage;
+            global.onmessage = function() {
+                postMessageIsAsynchronous = false;
+            };
+            global.postMessage("", "*");
+            global.onmessage = oldOnMessage;
+            return postMessageIsAsynchronous;
+        }
+    }
+
+    function installPostMessageImplementation() {
+        // Installs an event handler on `global` for the `message` event: see
+        // * https://developer.mozilla.org/en/DOM/window.postMessage
+        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+
+        var messagePrefix = "setImmediate$" + Math.random() + "$";
+        var onGlobalMessage = function(event) {
+            if (event.source === global &&
+                typeof event.data === "string" &&
+                event.data.indexOf(messagePrefix) === 0) {
+                runIfPresent(+event.data.slice(messagePrefix.length));
+            }
+        };
+
+        if (global.addEventListener) {
+            global.addEventListener("message", onGlobalMessage, false);
+        } else {
+            global.attachEvent("onmessage", onGlobalMessage);
+        }
+
+        registerImmediate = function(handle) {
+            global.postMessage(messagePrefix + handle, "*");
+        };
+    }
+
+    function installMessageChannelImplementation() {
+        var channel = new MessageChannel();
+        channel.port1.onmessage = function(event) {
+            var handle = event.data;
+            runIfPresent(handle);
+        };
+
+        registerImmediate = function(handle) {
+            channel.port2.postMessage(handle);
+        };
+    }
+
+    function installReadyStateChangeImplementation() {
+        var html = doc.documentElement;
+        registerImmediate = function(handle) {
+            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+            var script = doc.createElement("script");
+            script.onreadystatechange = function () {
+                runIfPresent(handle);
+                script.onreadystatechange = null;
+                html.removeChild(script);
+                script = null;
+            };
+            html.appendChild(script);
+        };
+    }
+
+    function installSetTimeoutImplementation() {
+        registerImmediate = function(handle) {
+            setTimeout(runIfPresent, 0, handle);
+        };
+    }
+
+    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+
+    // Don't get fooled by e.g. browserify environments.
+    if ({}.toString.call(global.process) === "[object process]") {
+        // For Node.js before 0.9
+        installNextTickImplementation();
+
+    } else if (canUsePostMessage()) {
+        // For non-IE10 modern browsers
+        installPostMessageImplementation();
+
+    } else if (global.MessageChannel) {
+        // For web workers, where supported
+        installMessageChannelImplementation();
+
+    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+        // For IE 6–8
+        installReadyStateChangeImplementation();
+
+    } else {
+        // For older browsers
+        installSetTimeoutImplementation();
+    }
+
+    attachTo.setImmediate = setImmediate;
+    attachTo.clearImmediate = clearImmediate;
+}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js"), __webpack_require__(/*! ./../process/browser.js */ "./node_modules/process/browser.js")))
+
+/***/ }),
+
+/***/ "./node_modules/timers-browserify/main.js":
+/*!************************************************!*\
+  !*** ./node_modules/timers-browserify/main.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(/*! setimmediate */ "./node_modules/setimmediate/setImmediate.js");
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/webpack/buildin/global.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || new Function("return this")();
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ "./node_modules/whatwg-fetch/fetch.js":
+/*!********************************************!*\
+  !*** ./node_modules/whatwg-fetch/fetch.js ***!
+  \********************************************/
+/*! exports provided: Headers, Request, Response, DOMException, fetch */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Headers", function() { return Headers; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Request", function() { return Request; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Response", function() { return Response; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DOMException", function() { return DOMException; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fetch", function() { return fetch; });
+var support = {
+  searchParams: 'URLSearchParams' in self,
+  iterable: 'Symbol' in self && 'iterator' in Symbol,
+  blob:
+    'FileReader' in self &&
+    'Blob' in self &&
+    (function() {
+      try {
+        new Blob()
+        return true
+      } catch (e) {
+        return false
+      }
+    })(),
+  formData: 'FormData' in self,
+  arrayBuffer: 'ArrayBuffer' in self
+}
+
+function isDataView(obj) {
+  return obj && DataView.prototype.isPrototypeOf(obj)
+}
+
+if (support.arrayBuffer) {
+  var viewClasses = [
+    '[object Int8Array]',
+    '[object Uint8Array]',
+    '[object Uint8ClampedArray]',
+    '[object Int16Array]',
+    '[object Uint16Array]',
+    '[object Int32Array]',
+    '[object Uint32Array]',
+    '[object Float32Array]',
+    '[object Float64Array]'
+  ]
+
+  var isArrayBufferView =
+    ArrayBuffer.isView ||
+    function(obj) {
+      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+    }
+}
+
+function normalizeName(name) {
+  if (typeof name !== 'string') {
+    name = String(name)
+  }
+  if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
+    throw new TypeError('Invalid character in header field name')
+  }
+  return name.toLowerCase()
+}
+
+function normalizeValue(value) {
+  if (typeof value !== 'string') {
+    value = String(value)
+  }
+  return value
+}
+
+// Build a destructive iterator for the value list
+function iteratorFor(items) {
+  var iterator = {
+    next: function() {
+      var value = items.shift()
+      return {done: value === undefined, value: value}
+    }
+  }
+
+  if (support.iterable) {
+    iterator[Symbol.iterator] = function() {
+      return iterator
+    }
+  }
+
+  return iterator
+}
+
+function Headers(headers) {
+  this.map = {}
+
+  if (headers instanceof Headers) {
+    headers.forEach(function(value, name) {
+      this.append(name, value)
+    }, this)
+  } else if (Array.isArray(headers)) {
+    headers.forEach(function(header) {
+      this.append(header[0], header[1])
+    }, this)
+  } else if (headers) {
+    Object.getOwnPropertyNames(headers).forEach(function(name) {
+      this.append(name, headers[name])
+    }, this)
+  }
+}
+
+Headers.prototype.append = function(name, value) {
+  name = normalizeName(name)
+  value = normalizeValue(value)
+  var oldValue = this.map[name]
+  this.map[name] = oldValue ? oldValue + ', ' + value : value
+}
+
+Headers.prototype['delete'] = function(name) {
+  delete this.map[normalizeName(name)]
+}
+
+Headers.prototype.get = function(name) {
+  name = normalizeName(name)
+  return this.has(name) ? this.map[name] : null
+}
+
+Headers.prototype.has = function(name) {
+  return this.map.hasOwnProperty(normalizeName(name))
+}
+
+Headers.prototype.set = function(name, value) {
+  this.map[normalizeName(name)] = normalizeValue(value)
+}
+
+Headers.prototype.forEach = function(callback, thisArg) {
+  for (var name in this.map) {
+    if (this.map.hasOwnProperty(name)) {
+      callback.call(thisArg, this.map[name], name, this)
+    }
+  }
+}
+
+Headers.prototype.keys = function() {
+  var items = []
+  this.forEach(function(value, name) {
+    items.push(name)
+  })
+  return iteratorFor(items)
+}
+
+Headers.prototype.values = function() {
+  var items = []
+  this.forEach(function(value) {
+    items.push(value)
+  })
+  return iteratorFor(items)
+}
+
+Headers.prototype.entries = function() {
+  var items = []
+  this.forEach(function(value, name) {
+    items.push([name, value])
+  })
+  return iteratorFor(items)
+}
+
+if (support.iterable) {
+  Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+}
+
+function consumed(body) {
+  if (body.bodyUsed) {
+    return Promise.reject(new TypeError('Already read'))
+  }
+  body.bodyUsed = true
+}
+
+function fileReaderReady(reader) {
+  return new Promise(function(resolve, reject) {
+    reader.onload = function() {
+      resolve(reader.result)
+    }
+    reader.onerror = function() {
+      reject(reader.error)
+    }
+  })
+}
+
+function readBlobAsArrayBuffer(blob) {
+  var reader = new FileReader()
+  var promise = fileReaderReady(reader)
+  reader.readAsArrayBuffer(blob)
+  return promise
+}
+
+function readBlobAsText(blob) {
+  var reader = new FileReader()
+  var promise = fileReaderReady(reader)
+  reader.readAsText(blob)
+  return promise
+}
+
+function readArrayBufferAsText(buf) {
+  var view = new Uint8Array(buf)
+  var chars = new Array(view.length)
+
+  for (var i = 0; i < view.length; i++) {
+    chars[i] = String.fromCharCode(view[i])
+  }
+  return chars.join('')
+}
+
+function bufferClone(buf) {
+  if (buf.slice) {
+    return buf.slice(0)
+  } else {
+    var view = new Uint8Array(buf.byteLength)
+    view.set(new Uint8Array(buf))
+    return view.buffer
+  }
+}
+
+function Body() {
+  this.bodyUsed = false
+
+  this._initBody = function(body) {
+    this._bodyInit = body
+    if (!body) {
+      this._bodyText = ''
+    } else if (typeof body === 'string') {
+      this._bodyText = body
+    } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+      this._bodyBlob = body
+    } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+      this._bodyFormData = body
+    } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+      this._bodyText = body.toString()
+    } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+      this._bodyArrayBuffer = bufferClone(body.buffer)
+      // IE 10-11 can't handle a DataView body.
+      this._bodyInit = new Blob([this._bodyArrayBuffer])
+    } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+      this._bodyArrayBuffer = bufferClone(body)
+    } else {
+      this._bodyText = body = Object.prototype.toString.call(body)
+    }
+
+    if (!this.headers.get('content-type')) {
+      if (typeof body === 'string') {
+        this.headers.set('content-type', 'text/plain;charset=UTF-8')
+      } else if (this._bodyBlob && this._bodyBlob.type) {
+        this.headers.set('content-type', this._bodyBlob.type)
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+      }
+    }
+  }
+
+  if (support.blob) {
+    this.blob = function() {
+      var rejected = consumed(this)
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return Promise.resolve(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as blob')
+      } else {
+        return Promise.resolve(new Blob([this._bodyText]))
+      }
+    }
+
+    this.arrayBuffer = function() {
+      if (this._bodyArrayBuffer) {
+        return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+      } else {
+        return this.blob().then(readBlobAsArrayBuffer)
+      }
+    }
+  }
+
+  this.text = function() {
+    var rejected = consumed(this)
+    if (rejected) {
+      return rejected
+    }
+
+    if (this._bodyBlob) {
+      return readBlobAsText(this._bodyBlob)
+    } else if (this._bodyArrayBuffer) {
+      return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+    } else if (this._bodyFormData) {
+      throw new Error('could not read FormData body as text')
+    } else {
+      return Promise.resolve(this._bodyText)
+    }
+  }
+
+  if (support.formData) {
+    this.formData = function() {
+      return this.text().then(decode)
+    }
+  }
+
+  this.json = function() {
+    return this.text().then(JSON.parse)
+  }
+
+  return this
+}
+
+// HTTP methods whose capitalization should be normalized
+var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+function normalizeMethod(method) {
+  var upcased = method.toUpperCase()
+  return methods.indexOf(upcased) > -1 ? upcased : method
+}
+
+function Request(input, options) {
+  options = options || {}
+  var body = options.body
+
+  if (input instanceof Request) {
+    if (input.bodyUsed) {
+      throw new TypeError('Already read')
+    }
+    this.url = input.url
+    this.credentials = input.credentials
+    if (!options.headers) {
+      this.headers = new Headers(input.headers)
+    }
+    this.method = input.method
+    this.mode = input.mode
+    this.signal = input.signal
+    if (!body && input._bodyInit != null) {
+      body = input._bodyInit
+      input.bodyUsed = true
+    }
+  } else {
+    this.url = String(input)
+  }
+
+  this.credentials = options.credentials || this.credentials || 'same-origin'
+  if (options.headers || !this.headers) {
+    this.headers = new Headers(options.headers)
+  }
+  this.method = normalizeMethod(options.method || this.method || 'GET')
+  this.mode = options.mode || this.mode || null
+  this.signal = options.signal || this.signal
+  this.referrer = null
+
+  if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+    throw new TypeError('Body not allowed for GET or HEAD requests')
+  }
+  this._initBody(body)
+}
+
+Request.prototype.clone = function() {
+  return new Request(this, {body: this._bodyInit})
+}
+
+function decode(body) {
+  var form = new FormData()
+  body
+    .trim()
+    .split('&')
+    .forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=')
+        var name = split.shift().replace(/\+/g, ' ')
+        var value = split.join('=').replace(/\+/g, ' ')
+        form.append(decodeURIComponent(name), decodeURIComponent(value))
+      }
+    })
+  return form
+}
+
+function parseHeaders(rawHeaders) {
+  var headers = new Headers()
+  // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
+  // https://tools.ietf.org/html/rfc7230#section-3.2
+  var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ')
+  preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
+    var parts = line.split(':')
+    var key = parts.shift().trim()
+    if (key) {
+      var value = parts.join(':').trim()
+      headers.append(key, value)
+    }
+  })
+  return headers
+}
+
+Body.call(Request.prototype)
+
+function Response(bodyInit, options) {
+  if (!options) {
+    options = {}
+  }
+
+  this.type = 'default'
+  this.status = options.status === undefined ? 200 : options.status
+  this.ok = this.status >= 200 && this.status < 300
+  this.statusText = 'statusText' in options ? options.statusText : 'OK'
+  this.headers = new Headers(options.headers)
+  this.url = options.url || ''
+  this._initBody(bodyInit)
+}
+
+Body.call(Response.prototype)
+
+Response.prototype.clone = function() {
+  return new Response(this._bodyInit, {
+    status: this.status,
+    statusText: this.statusText,
+    headers: new Headers(this.headers),
+    url: this.url
+  })
+}
+
+Response.error = function() {
+  var response = new Response(null, {status: 0, statusText: ''})
+  response.type = 'error'
+  return response
+}
+
+var redirectStatuses = [301, 302, 303, 307, 308]
+
+Response.redirect = function(url, status) {
+  if (redirectStatuses.indexOf(status) === -1) {
+    throw new RangeError('Invalid status code')
+  }
+
+  return new Response(null, {status: status, headers: {location: url}})
+}
+
+var DOMException = self.DOMException
+try {
+  new DOMException()
+} catch (err) {
+  DOMException = function(message, name) {
+    this.message = message
+    this.name = name
+    var error = Error(message)
+    this.stack = error.stack
+  }
+  DOMException.prototype = Object.create(Error.prototype)
+  DOMException.prototype.constructor = DOMException
+}
+
+function fetch(input, init) {
+  return new Promise(function(resolve, reject) {
+    var request = new Request(input, init)
+
+    if (request.signal && request.signal.aborted) {
+      return reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    var xhr = new XMLHttpRequest()
+
+    function abortXhr() {
+      xhr.abort()
+    }
+
+    xhr.onload = function() {
+      var options = {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+      }
+      options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+      var body = 'response' in xhr ? xhr.response : xhr.responseText
+      resolve(new Response(body, options))
+    }
+
+    xhr.onerror = function() {
+      reject(new TypeError('Network request failed'))
+    }
+
+    xhr.ontimeout = function() {
+      reject(new TypeError('Network request failed'))
+    }
+
+    xhr.onabort = function() {
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    xhr.open(request.method, request.url, true)
+
+    if (request.credentials === 'include') {
+      xhr.withCredentials = true
+    } else if (request.credentials === 'omit') {
+      xhr.withCredentials = false
+    }
+
+    if ('responseType' in xhr && support.blob) {
+      xhr.responseType = 'blob'
+    }
+
+    request.headers.forEach(function(value, name) {
+      xhr.setRequestHeader(name, value)
+    })
+
+    if (request.signal) {
+      request.signal.addEventListener('abort', abortXhr)
+
+      xhr.onreadystatechange = function() {
+        // DONE (success or failure)
+        if (xhr.readyState === 4) {
+          request.signal.removeEventListener('abort', abortXhr)
+        }
+      }
+    }
+
+    xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+  })
+}
+
+fetch.polyfill = true
+
+if (!self.fetch) {
+  self.fetch = fetch
+  self.Headers = Headers
+  self.Request = Request
+  self.Response = Response
+}
+
+
+/***/ }),
+
+/***/ "./src/js/Component/PrefetchManager.js":
+/*!*********************************************!*\
+  !*** ./src/js/Component/PrefetchManager.js ***!
+  \*********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var PrefetchManager =
+/*#__PURE__*/
+function () {
+  function PrefetchManager(component) {
+    _classCallCheck(this, PrefetchManager);
+
+    this.component = component;
+    this.prefetchMessagesByActionId = {};
+  }
+
+  _createClass(PrefetchManager, [{
+    key: "addMessage",
+    value: function addMessage(message) {
+      this.prefetchMessagesByActionId[message.prefetchId] = message;
+    }
+  }, {
+    key: "storeResponseInMessageForPayload",
+    value: function storeResponseInMessageForPayload(payload) {
+      var message = this.prefetchMessagesByActionId[payload.fromPrefetch];
+      if (message) message.storeResponse(payload);
+    }
+  }, {
+    key: "actionHasPrefetch",
+    value: function actionHasPrefetch(action) {
+      return Object.keys(this.prefetchMessagesByActionId).includes(action.toId());
+    }
+  }, {
+    key: "actionPrefetchResponseHasBeenReceived",
+    value: function actionPrefetchResponseHasBeenReceived(action) {
+      return !!this.getPrefetchMessageByAction(action).response;
+    }
+  }, {
+    key: "getPrefetchMessageByAction",
+    value: function getPrefetchMessageByAction(action) {
+      return this.prefetchMessagesByActionId[action.toId()];
+    }
+  }, {
+    key: "clearPrefetches",
+    value: function clearPrefetches() {
+      this.prefetchMessagesByActionId = {};
+    }
+  }]);
+
+  return PrefetchManager;
+}();
+
+/* harmony default export */ __webpack_exports__["default"] = (PrefetchManager);
+
+/***/ }),
+
+/***/ "./src/js/Component/index.js":
+/*!***********************************!*\
+  !*** ./src/js/Component/index.js ***!
+  \***********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Component; });
+/* harmony import */ var _Message__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Message */ "./src/js/Message.js");
+/* harmony import */ var _PrefetchMessage__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/PrefetchMessage */ "./src/js/PrefetchMessage.js");
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/util */ "./src/js/util/index.js");
+/* harmony import */ var _dom_morphdom__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/dom/morphdom */ "./src/js/dom/morphdom/index.js");
+/* harmony import */ var _dom_dom__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/dom/dom */ "./src/js/dom/dom.js");
+/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/dom/dom_element */ "./src/js/dom/dom_element.js");
+/* harmony import */ var _node_initializer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/node_initializer */ "./src/js/node_initializer.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+/* harmony import */ var _PrefetchManager__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./PrefetchManager */ "./src/js/Component/PrefetchManager.js");
+/* harmony import */ var _action_method__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/action/method */ "./src/js/action/method.js");
+/* harmony import */ var _action_model__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/action/model */ "./src/js/action/model.js");
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+var Component =
+/*#__PURE__*/
+function () {
+  function Component(el, connection) {
+    _classCallCheck(this, Component);
+
+    el.rawNode().__livewire = this;
+    this.id = el.getAttribute('id');
+    this.data = JSON.parse(this.extractLivewireAttribute('data'));
+    this.events = JSON.parse(this.extractLivewireAttribute('events'));
+    this.children = JSON.parse(this.extractLivewireAttribute('children'));
+    this.checksum = this.extractLivewireAttribute('checksum');
+    this.name = this.extractLivewireAttribute('name');
+    this.connection = connection;
+    this.actionQueue = [];
+    this.messageInTransit = null;
+    this.modelTimeout = null;
+    this.tearDownCallbacks = [];
+    this.prefetchManager = new _PrefetchManager__WEBPACK_IMPORTED_MODULE_8__["default"](this);
+    _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('componentInitialized', this);
+    this.initialize();
+    this.registerEchoListeners();
+  }
+
+  _createClass(Component, [{
+    key: "extractLivewireAttribute",
+    value: function extractLivewireAttribute(name) {
+      var value = this.el.getAttribute(name);
+      this.el.removeAttribute(name);
+      return value;
+    }
+  }, {
+    key: "initialize",
+    value: function initialize() {
+      var _this = this;
+
+      this.walk(function (el) {
+        // Will run for every node in the component tree (not child component nodes).
+        _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this);
+      }, function (el) {
+        // When new component is encountered in the tree, add it.
+        _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this.connection));
+      });
+    }
+  }, {
+    key: "get",
+    value: function get(name) {
+      return this.data[name];
+    }
+  }, {
+    key: "set",
+    value: function set(name, value) {
+      this.addAction(new _action_model__WEBPACK_IMPORTED_MODULE_10__["default"](name, value, this.el));
+    }
+  }, {
+    key: "call",
+    value: function call(method) {
+      for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        params[_key - 1] = arguments[_key];
+      }
+
+      this.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_9__["default"](method, params, this.el));
+    }
+  }, {
+    key: "addAction",
+    value: function addAction(action) {
+      if (this.prefetchManager.actionHasPrefetch(action) && this.prefetchManager.actionPrefetchResponseHasBeenReceived(action)) {
+        var message = this.prefetchManager.getPrefetchMessageByAction(action);
+        this.handleResponse(message.response);
+        this.prefetchManager.clearPrefetches();
+        return;
+      }
+
+      this.actionQueue.push(action); // This debounce is here in-case two events fire at the "same" time:
+      // For example: if you are listening for a click on element A,
+      // and a "blur" on element B. If element B has focus, and then,
+      // you click on element A, the blur event will fire before the "click"
+      // event. This debounce captures them both in the actionsQueue and sends
+      // them off at the same time.
+      // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
+
+      Object(_util__WEBPACK_IMPORTED_MODULE_2__["debounce"])(this.fireMessage, 5).apply(this); // Clear prefetches.
+
+      this.prefetchManager.clearPrefetches();
+    }
+  }, {
+    key: "fireMessage",
+    value: function fireMessage() {
+      if (this.messageInTransit) return;
+      this.messageInTransit = new _Message__WEBPACK_IMPORTED_MODULE_0__["default"](this, this.actionQueue);
+      this.connection.sendMessage(this.messageInTransit);
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('messageSent', this, this.messageInTransit);
+      this.actionQueue = [];
+    }
+  }, {
+    key: "messageSendFailed",
+    value: function messageSendFailed() {
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('messageFailed', this);
+      this.messageInTransit = null;
+    }
+  }, {
+    key: "receiveMessage",
+    value: function receiveMessage(payload) {
+      var response = this.messageInTransit.storeResponse(payload);
+      this.handleResponse(response);
+    }
+  }, {
+    key: "handleResponse",
+    value: function handleResponse(response) {
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('responseReceived', this, response);
+      this.data = response.data;
+      this.checksum = response.checksum;
+      this.children = response.children;
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].setComponentsAsCollected(response.gc); // This means "$this->redirect()" was called in the component. let's just bail and redirect.
+
+      if (response.redirectTo) {
+        window.location.href = response.redirectTo;
+        return;
+      }
+
+      this.replaceDom(response.dom, response.dirtyInputs);
+      this.forceRefreshDataBoundElementsMarkedAsDirty(response.dirtyInputs);
+      this.messageInTransit = null;
+
+      if (response.eventQueue && response.eventQueue.length > 0) {
+        response.eventQueue.forEach(function (event) {
+          _Store__WEBPACK_IMPORTED_MODULE_7__["default"].emit.apply(_Store__WEBPACK_IMPORTED_MODULE_7__["default"], [event.event].concat(_toConsumableArray(event.params)));
+        });
+      }
+    }
+  }, {
+    key: "forceRefreshDataBoundElementsMarkedAsDirty",
+    value: function forceRefreshDataBoundElementsMarkedAsDirty(dirtyInputs) {
+      var _this2 = this;
+
+      this.walk(function (el) {
+        if (el.directives.missing('model')) return;
+        var modelValue = el.directives.get('model').value;
+        if (el.isFocused() && !dirtyInputs.includes(modelValue)) return;
+        el.setInputValueFromModel(_this2);
+      });
+    }
+  }, {
+    key: "replaceDom",
+    value: function replaceDom(rawDom) {
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].beforeDomUpdateCallback();
+      this.handleMorph(this.formatDomBeforeDiffToAvoidConflictsWithVue(rawDom.trim()));
+      _Store__WEBPACK_IMPORTED_MODULE_7__["default"].afterDomUpdateCallback();
+    }
+  }, {
+    key: "formatDomBeforeDiffToAvoidConflictsWithVue",
+    value: function formatDomBeforeDiffToAvoidConflictsWithVue(inputDom) {
+      if (!window.Vue) return inputDom;
+      var div = document.createElement('div');
+      div.innerHTML = inputDom;
+      new window.Vue().$mount(div.firstElementChild);
+      return div.firstElementChild.outerHTML;
+    }
+  }, {
+    key: "addPrefetchAction",
+    value: function addPrefetchAction(action) {
+      if (this.prefetchManager.actionHasPrefetch(action)) {
+        return;
+      }
+
+      var message = new _PrefetchMessage__WEBPACK_IMPORTED_MODULE_1__["default"](this, action);
+      this.prefetchManager.addMessage(message);
+      this.connection.sendMessage(message);
+    }
+  }, {
+    key: "receivePrefetchMessage",
+    value: function receivePrefetchMessage(payload) {
+      this.prefetchManager.storeResponseInMessageForPayload(payload);
+    }
+  }, {
+    key: "handleMorph",
+    value: function handleMorph(dom) {
+      var _this3 = this;
+
+      Object(_dom_morphdom__WEBPACK_IMPORTED_MODULE_3__["default"])(this.el.rawNode(), dom, {
+        childrenOnly: false,
+        getNodeKey: function getNodeKey(node) {
+          // This allows the tracking of elements by the "key" attribute, like in VueJs.
+          return node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":key")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":key")) // If no "key", then first check for "wire:id", then "wire:model", then "id"
+          : node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":id")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":id")) : node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":model")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].prefix, ":model")) : node.id;
+        },
+        onBeforeNodeAdded: function onBeforeNodeAdded(node) {
+          return new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node).transitionElementIn();
+        },
+        onBeforeNodeDiscarded: function onBeforeNodeDiscarded(node) {
+          var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
+          return el.transitionElementOut(function (nodeDiscarded) {
+            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this3);
+          });
+        },
+        onNodeDiscarded: function onNodeDiscarded(node) {
+          var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
+          _Store__WEBPACK_IMPORTED_MODULE_7__["default"].callHook('elementRemoved', el, _this3);
+
+          if (node.__livewire) {
+            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].removeComponent(node.__livewire);
+          }
+        },
+        onBeforeElChildrenUpdated: function onBeforeElChildrenUpdated(node) {//
+        },
+        onBeforeElUpdated: function onBeforeElUpdated(from, to) {
+          // Because morphdom also supports vDom nodes, it uses isSameNode to detect
+          // sameness. When dealing with DOM nodes, we want isEqualNode, otherwise
+          // isSameNode will ALWAYS return false.
+          if (from.isEqualNode(to)) {
+            return false;
+          }
+
+          var fromEl = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](from); // Honor the "wire:ignore" attribute.
+
+          if (fromEl.directives.has('ignore')) {
+            if (fromEl.directives.get('ignore').modifiers.includes('self')) {
+              // Don't update children of "wire:ingore.self" attribute.
+              from.skipElUpdatingButStillUpdateChildren = true;
+            } else {
+              return false;
+            }
+          } // Children will update themselves.
+
+
+          if (fromEl.isComponentRootEl() && fromEl.getAttribute('id') !== _this3.id) return false; // Don't touch Vue components
+
+          if (fromEl.isVueComponent()) return false;
+        },
+        onElUpdated: function onElUpdated(node) {//
+        },
+        onNodeAdded: function onNodeAdded(node) {
+          var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node);
+          var closestComponentId = el.closestRoot().getAttribute('id');
+
+          if (closestComponentId === _this3.id) {
+            _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this3);
+          } else if (el.isComponentRootEl()) {
+            _Store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this3.connection));
+          } // Skip.
+
+        }
+      });
+    }
+  }, {
+    key: "walk",
+    value: function walk(callback) {
+      var _this4 = this;
+
+      var callbackWhenNewComponentIsEncountered = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function (el) {};
+
+      Object(_util__WEBPACK_IMPORTED_MODULE_2__["walk"])(this.el.rawNode(), function (node) {
+        var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_5__["default"](node); // Skip the root component element.
+
+        if (el.isSameNode(_this4.el)) {
+          callback(el);
+          return;
+        } // If we encounter a nested component, skip walking that tree.
+
+
+        if (el.isComponentRootEl()) {
+          callbackWhenNewComponentIsEncountered(el);
+          return false;
+        }
+
+        callback(el);
+      });
+    }
+  }, {
+    key: "registerEchoListeners",
+    value: function registerEchoListeners() {
+      if (Array.isArray(this.events)) {
+        this.events.forEach(function (event) {
+          if (event.startsWith('echo')) {
+            if (typeof Echo === 'undefined') {
+              console.warn('Laravel Echo cannot be found');
+              return;
+            }
+
+            var event_parts = event.split(/(echo:|echo-)|:|,/);
+
+            if (event_parts[1] == 'echo:') {
+              event_parts.splice(2, 0, 'channel', undefined);
+            }
+
+            if (event_parts[2] == 'notification') {
+              event_parts.push(undefined, undefined);
+            }
+
+            var _event_parts = _slicedToArray(event_parts, 7),
+                s1 = _event_parts[0],
+                signature = _event_parts[1],
+                channel_type = _event_parts[2],
+                s2 = _event_parts[3],
+                channel = _event_parts[4],
+                s3 = _event_parts[5],
+                event_name = _event_parts[6];
+
+            if (['channel', 'private'].includes(channel_type)) {
+              Echo[channel_type](channel).listen(event_name, function (e) {
+                _Store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, e);
+              });
+            } else if (channel_type == 'presence') {
+              Echo.join(channel)[event_name](function (e) {
+                _Store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, e);
+              });
+            } else if (channel_type == 'notification') {
+              Echo["private"](channel).notification(function (notification) {
+                _Store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, notification);
+              });
+            } else {
+              console.warn('Echo channel type not yet supported');
+            }
+          }
+        });
+      }
+    }
+  }, {
+    key: "modelSyncDebounce",
+    value: function modelSyncDebounce(callback, time) {
+      var _this5 = this;
+
+      return function (e) {
+        clearTimeout(_this5.modelTimeout);
+
+        _this5.modelTimeoutCallback = function () {
+          callback(e);
+        };
+
+        _this5.modelTimeout = setTimeout(function () {
+          callback(e);
+          _this5.modelTimeout = null;
+          _this5.modelTimeoutCallback = null;
+        }, time);
+      };
+    }
+  }, {
+    key: "callAfterModelDebounce",
+    value: function callAfterModelDebounce(callback) {
+      // This is to protect against the following scenario:
+      // A user is typing into a debounced input, and hits the enter key.
+      // If the enter key submits a form or something, the submission
+      // will happen BEFORE the model input finishes syncing because
+      // of the debounce. This makes sure to clear anything in the debounce queue.
+      if (this.modelTimeout) {
+        clearTimeout(this.modelTimeout);
+        this.modelTimeoutCallback();
+        this.modelTimeout = null;
+        this.modelTimeoutCallback = null;
+      }
+
+      callback();
+    }
+  }, {
+    key: "addListenerForTeardown",
+    value: function addListenerForTeardown(teardownCallback) {
+      this.tearDownCallbacks.push(teardownCallback);
+    }
+  }, {
+    key: "tearDown",
+    value: function tearDown() {
+      this.tearDownCallbacks.forEach(function (callback) {
+        return callback();
+      });
+    }
+  }, {
+    key: "el",
+    get: function get() {
+      return _dom_dom__WEBPACK_IMPORTED_MODULE_4__["default"].getByAttributeAndValue('id', this.id);
+    }
+  }, {
+    key: "root",
+    get: function get() {
+      return this.el;
+    }
+  }]);
+
+  return Component;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/js/HookManager.js":
+/*!*******************************!*\
+  !*** ./src/js/HookManager.js ***!
+  \*******************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+  availableHooks: ['componentInitialized', 'elementInitialized', 'elementRemoved', 'messageSent', 'messageFailed', 'responseReceived'],
+  hooks: {},
+  register: function register(name, callback) {
+    if (!this.availableHooks.includes(name)) {
+      throw "Livewire: Referencing unknown hook: [".concat(name, "]");
+    }
+
+    if (!this.hooks[name]) {
+      this.hooks[name] = [];
+    }
+
+    this.hooks[name].push(callback);
+  },
+  call: function call(name) {
+    for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      params[_key - 1] = arguments[_key];
+    }
+
+    (this.hooks[name] || []).forEach(function (callback) {
+      callback.apply(void 0, params);
+    });
+  }
+});
+
+/***/ }),
+
+/***/ "./src/js/Message.js":
+/*!***************************!*\
+  !*** ./src/js/Message.js ***!
+  \***************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _default; });
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+var _default =
+/*#__PURE__*/
+function () {
+  function _default(component, actionQueue) {
+    _classCallCheck(this, _default);
+
+    this.component = component;
+    this.actionQueue = actionQueue;
+  }
+
+  _createClass(_default, [{
+    key: "payload",
+    value: function payload() {
+      return {
+        id: this.component.id,
+        data: this.component.data,
+        name: this.component.name,
+        checksum: this.component.checksum,
+        children: this.component.children,
+        actionQueue: this.actionQueue.map(function (action) {
+          // This ensures only the type & payload properties only get sent over.
+          return {
+            type: action.type,
+            payload: action.payload
+          };
+        }),
+        gc: _Store__WEBPACK_IMPORTED_MODULE_0__["default"].getComponentsForCollection()
+      };
+    }
+  }, {
+    key: "storeResponse",
+    value: function storeResponse(payload) {
+      return this.response = {
+        id: payload.id,
+        dom: payload.dom,
+        checksum: payload.checksum,
+        children: payload.children,
+        dirtyInputs: payload.dirtyInputs,
+        eventQueue: payload.eventQueue,
+        events: payload.events,
+        data: payload.data,
+        redirectTo: payload.redirectTo,
+        gc: payload.gc
+      };
+    }
+  }, {
+    key: "refs",
+    get: function get() {
+      return this.actionQueue.map(function (action) {
+        return action.ref;
+      }).filter(function (ref) {
+        return ref;
+      });
+    }
+  }]);
+
+  return _default;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/js/PrefetchMessage.js":
+/*!***********************************!*\
+  !*** ./src/js/PrefetchMessage.js ***!
+  \***********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _default; });
+/* harmony import */ var _Message__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Message */ "./src/js/Message.js");
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _get(target, property, receiver) { if (typeof Reflect !== "undefined" && Reflect.get) { _get = Reflect.get; } else { _get = function _get(target, property, receiver) { var base = _superPropBase(target, property); if (!base) return; var desc = Object.getOwnPropertyDescriptor(base, property); if (desc.get) { return desc.get.call(receiver); } return desc.value; }; } return _get(target, property, receiver || target); }
+
+function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+
+
+var _default =
+/*#__PURE__*/
+function (_Message) {
+  _inherits(_default, _Message);
+
+  function _default(component, action) {
+    _classCallCheck(this, _default);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(_default).call(this, component, [action]));
+  }
+
+  _createClass(_default, [{
+    key: "payload",
+    value: function payload() {
+      return _objectSpread({
+        fromPrefetch: this.prefetchId
+      }, _get(_getPrototypeOf(_default.prototype), "payload", this).call(this));
+    }
+  }, {
+    key: "storeResponse",
+    value: function storeResponse(payload) {
+      _get(_getPrototypeOf(_default.prototype), "storeResponse", this).call(this, payload);
+
+      this.response.fromPrefetch = payload.fromPrefetch;
+      return this.response;
+    }
+  }, {
+    key: "prefetchId",
+    get: function get() {
+      return this.actionQueue[0].toId();
+    }
+  }]);
+
+  return _default;
+}(_Message__WEBPACK_IMPORTED_MODULE_0__["default"]);
+
+
+
+/***/ }),
+
+/***/ "./src/js/Store.js":
+/*!*************************!*\
+  !*** ./src/js/Store.js ***!
+  \*************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _action_event__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/action/event */ "./src/js/action/event.js");
+/* harmony import */ var _HookManager__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/HookManager */ "./src/js/HookManager.js");
+
+
+var store = {
+  componentsById: {},
+  listeners: {},
+  beforeDomUpdateCallback: function beforeDomUpdateCallback() {},
+  afterDomUpdateCallback: function afterDomUpdateCallback() {},
+  livewireIsInBackground: false,
+  livewireIsOffline: false,
+  hooks: _HookManager__WEBPACK_IMPORTED_MODULE_1__["default"],
+  components: function components() {
+    var _this = this;
+
+    return Object.keys(this.componentsById).map(function (key) {
+      return _this.componentsById[key];
+    });
+  },
+  addComponent: function addComponent(component) {
+    return this.componentsById[component.id] = component;
+  },
+  findComponent: function findComponent(id) {
+    return this.componentsById[id];
+  },
+  hasComponent: function hasComponent(id) {
+    return !!this.componentsById[id];
+  },
+  tearDownComponents: function tearDownComponents() {
+    var _this2 = this;
+
+    this.components().forEach(function (component) {
+      _this2.removeComponent(component);
+    });
+  },
+  on: function on(event, callback) {
+    if (this.listeners[event] !== undefined) {
+      this.listeners[event].push(callback);
+    } else {
+      this.listeners[event] = [callback];
+    }
+  },
+  emit: function emit(event) {
+    for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      params[_key - 1] = arguments[_key];
+    }
+
+    if (this.listeners[event] !== undefined) {
+      this.listeners[event].forEach(function (callback) {
+        return callback.apply(void 0, params);
+      });
+    }
+
+    this.componentsListeningForEvent(event).forEach(function (component) {
+      return component.addAction(new _action_event__WEBPACK_IMPORTED_MODULE_0__["default"](event, params));
+    });
+  },
+  componentsListeningForEvent: function componentsListeningForEvent(event) {
+    return this.components().filter(function (component) {
+      return component.events.includes(event);
+    });
+  },
+  registerHook: function registerHook(name, callback) {
+    this.hooks.register(name, callback);
+  },
+  callHook: function callHook(name) {
+    var _this$hooks;
+
+    for (var _len2 = arguments.length, params = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      params[_key2 - 1] = arguments[_key2];
+    }
+
+    (_this$hooks = this.hooks).call.apply(_this$hooks, [name].concat(params));
+  },
+  beforeDomUpdate: function beforeDomUpdate(callback) {
+    this.beforeDomUpdateCallback = callback;
+  },
+  afterDomUpdate: function afterDomUpdate(callback) {
+    this.afterDomUpdateCallback = callback;
+  },
+  removeComponent: function removeComponent(component) {
+    // Remove event listeners attached to the DOM.
+    component.tearDown(); // Remove the component from the store.
+
+    delete this.componentsById[component.id]; // Add the component the queue for backend cache garbage collection.
+
+    this.addComponentForCollection(component.id);
+  },
+  initializeGarbageCollection: function initializeGarbageCollection() {
+    if (!window.localStorage.hasOwnProperty(this.localStorageKey())) {
+      window.localStorage.setItem(this.localStorageKey(), '');
+    }
+  },
+  getComponentsForCollection: function getComponentsForCollection() {
+    var storedString = atob(window.localStorage.getItem(this.localStorageKey()));
+    if (storedString === '') return [];
+    return storedString.split(',');
+  },
+  addComponentForCollection: function addComponentForCollection(componentId) {
+    return window.localStorage.setItem(this.localStorageKey(), btoa(this.getComponentsForCollection().concat(componentId).join(',')));
+  },
+  setComponentsAsCollected: function setComponentsAsCollected(componentIds) {
+    window.localStorage.setItem(this.localStorageKey(), btoa(this.getComponentsForCollection().filter(function (id) {
+      return !componentIds.includes(id);
+    }).join(',')));
+  },
+  localStorageKey: function localStorageKey() {
+    return 'livewire';
+  }
+};
+/* harmony default export */ __webpack_exports__["default"] = (store);
+
+/***/ }),
+
 /***/ "./src/js/action/event.js":
 /*!********************************!*\
   !*** ./src/js/action/event.js ***!
@@ -110,6 +2458,10 @@ __webpack_require__.r(__webpack_exports__);
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
@@ -140,7 +2492,15 @@ function (_Action) {
       params: params
     };
     return _this;
-  }
+  } // Overriding toId() becuase some EventActions don't have an "el"
+
+
+  _createClass(_default, [{
+    key: "toId",
+    value: function toId() {
+      return btoa(encodeURIComponent(this.type, this.payload.event, JSON.stringify(this.payload.params)));
+    }
+  }]);
 
   return _default;
 }(___WEBPACK_IMPORTED_MODULE_0__["default"]);
@@ -175,6 +2535,11 @@ function () {
   }
 
   _createClass(_default, [{
+    key: "toId",
+    value: function toId() {
+      return btoa(encodeURIComponent(this.el.el.outerHTML));
+    }
+  }, {
     key: "ref",
     get: function get() {
       return this.el ? this.el.ref : null;
@@ -294,116 +2659,17 @@ function (_Action) {
 
 /***/ }),
 
-/***/ "./src/js/component/handle_loading_directives.js":
-/*!*******************************************************!*\
-  !*** ./src/js/component/handle_loading_directives.js ***!
-  \*******************************************************/
+/***/ "./src/js/component/DirtyStates.js":
+/*!*****************************************!*\
+  !*** ./src/js/component/DirtyStates.js ***!
+  \*****************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../dom/dom_element */ "./src/js/dom/dom_element.js");
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  loadingEls: [],
-  loadingElsByRef: {},
-  addLoadingEl: function addLoadingEl(el, value, targetRef, remove) {
-    if (targetRef) {
-      if (this.loadingElsByRef[targetRef]) {
-        this.loadingElsByRef[targetRef].push({
-          el: el,
-          value: value,
-          remove: remove
-        });
-      } else {
-        this.loadingElsByRef[targetRef] = [{
-          el: el,
-          value: value,
-          remove: remove
-        }];
-      }
-    } else {
-      this.loadingEls.push({
-        el: el,
-        value: value,
-        remove: remove
-      });
-    }
-  },
-  removeLoadingEl: function removeLoadingEl(node) {
-    var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_0__["default"](node);
-    this.loadingEls = this.loadingEls.filter(function (_ref) {
-      var el = _ref.el;
-      return !el.isSameNode(node);
-    });
-
-    if (el.ref in this.loadingElsByRef) {
-      delete this.loadingElsByRef[el.ref];
-    }
-  },
-  setLoading: function setLoading(refs) {
-    var _this = this;
-
-    var refEls = refs.map(function (ref) {
-      return _this.loadingElsByRef[ref];
-    }).filter(function (el) {
-      return el;
-    }).flat();
-    var allEls = this.loadingEls.concat(refEls);
-    allEls.forEach(function (el) {
-      var directive = el.el.directives.get('loading');
-      el = el.el.el; // I'm so sorry @todo
-
-      if (directive.modifiers.includes('class')) {
-        if (directive.modifiers.includes('remove')) {
-          el.classList.remove(directive.value);
-        } else {
-          el.classList.add(directive.value);
-        }
-      } else if (directive.modifiers.includes('attr')) {
-        if (directive.modifiers.includes('remove')) {
-          el.removeAttribute(directive.value);
-        } else {
-          el.setAttribute(directive.value, true);
-        }
-      } else {
-        el.style.display = 'inline-block';
-      }
-    });
-    return allEls;
-  },
-  unsetLoading: function unsetLoading(loadingEls) {// No need to "unset" loading because the dom-diffing will automatically reverse any changes.
-  }
-});
-
-/***/ }),
-
-/***/ "./src/js/component/index.js":
-/*!***********************************!*\
-  !*** ./src/js/component/index.js ***!
-  \***********************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _message__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../message */ "./src/js/message.js");
-/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util */ "./src/js/util/index.js");
-/* harmony import */ var _dom_morphdom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../dom/morphdom */ "./src/js/dom/morphdom/index.js");
-/* harmony import */ var _dom_dom__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../dom/dom */ "./src/js/dom/dom.js");
-/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../dom/dom_element */ "./src/js/dom/dom_element.js");
-/* harmony import */ var _handle_loading_directives__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./handle_loading_directives */ "./src/js/component/handle_loading_directives.js");
-/* harmony import */ var _node_initializer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../node_initializer */ "./src/js/node_initializer.js");
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../store */ "./src/js/store.js");
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
+/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/dom/dom_element */ "./src/js/dom/dom_element.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
@@ -412,262 +2678,351 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  _Store__WEBPACK_IMPORTED_MODULE_1__["default"].registerHook('componentInitialized', function (component) {
+    component.dirtyElsByRef = {};
+    component.dirtyEls = [];
+    registerListener(component);
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_1__["default"].registerHook('elementInitialized', function (el, component) {
+    if (el.directives.missing('dirty')) return;
+    var refNames = el.directives.has('target') && el.directives.get('target').value.split(',').map(function (s) {
+      return s.trim();
+    });
+    addDirtyEls(component, el, refNames);
+  });
+});
 
-
-
-
-
-
-
-
-var Component =
-/*#__PURE__*/
-function () {
-  function Component(el, connection) {
-    _classCallCheck(this, Component);
-
-    this.id = el.getAttribute('id');
-    this.data = JSON.parse(el.getAttribute('data'));
-    this.events = JSON.parse(el.getAttribute('events'));
-    this.children = JSON.parse(el.getAttribute('children'));
-    this.middleware = el.getAttribute('middleware');
-    this.checksum = el.getAttribute('checksum');
-    this.name = el.getAttribute('name');
-    this.connection = connection;
-    this.actionQueue = [];
-    this.messageInTransit = null;
-    this.initialize();
-    this.registerEchoListeners();
+function addDirtyEls(component, el, targetRefs) {
+  if (targetRefs) {
+    targetRefs.forEach(function (targetRef) {
+      if (component.dirtyElsByRef[targetRef]) {
+        component.dirtyElsByRef[targetRef].push(el);
+      } else {
+        component.dirtyElsByRef[targetRef] = [el];
+      }
+    });
+  } else {
+    component.dirtyEls.push(el);
   }
+}
 
-  _createClass(Component, [{
-    key: "initialize",
-    value: function initialize() {
-      var _this = this;
+function registerListener(component) {
+  component.el.addEventListener('input', function (e) {
+    var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_0__["default"](e.target);
+    var allEls = [];
 
-      this.walk(function (el) {
-        // Will run for every node in the component tree (not child component nodes).
-        _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this);
-      }, function (el) {
-        // When new component is encountered in the tree, add it.
-        _store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this.connection));
-      });
+    if (el.directives.has('ref') && component.dirtyElsByRef[el.directives.get('ref').value]) {
+      allEls.push.apply(allEls, _toConsumableArray(component.dirtyElsByRef[el.directives.get('ref').value]));
     }
-  }, {
-    key: "addAction",
-    value: function addAction(action) {
-      this.actionQueue.push(action); // This debounce is here in-case two events fire at the "same" time:
-      // For example: if you are listening for a click on element A,
-      // and a "blur" on element B. If element B has focus, and then,
-      // you click on element A, the blur event will fire before the "click"
-      // event. This debounce captures them both in the actionsQueue and sends
-      // them off at the same time.
-      // Note: currently, it's set to 5ms, that might not be the right amount, we'll see.
 
-      Object(_util__WEBPACK_IMPORTED_MODULE_1__["debounce"])(this.fireMessage, 5).apply(this);
+    if (el.directives.has('dirty')) {
+      allEls.push.apply(allEls, _toConsumableArray(component.dirtyEls.filter(function (dirtyEl) {
+        return dirtyEl.directives.get('model').value === el.directives.get('model').value;
+      })));
     }
-  }, {
-    key: "fireMessage",
-    value: function fireMessage() {
-      if (this.messageInTransit) return;
-      this.messageInTransit = new _message__WEBPACK_IMPORTED_MODULE_0__["default"](this, this.actionQueue);
-      this.connection.sendMessage(this.messageInTransit);
-      this.actionQueue = [];
+
+    if (allEls.length < 1) return;
+
+    if (el.directives.missing('model')) {
+      console.warn('`wire:model` must be present on any element that uses `wire:dirty` or is a `wire:dirty` target.');
     }
-  }, {
-    key: "messageSendFailed",
-    value: function messageSendFailed() {
-      this.messageInTransit = null;
+
+    var isDirty = el.valueFromInput(component) != component.data[el.directives.get('model').value];
+    allEls.forEach(function (el) {
+      setDirtyState(el, isDirty);
+    });
+  });
+}
+
+function setDirtyState(el, isDirty) {
+  var directive = el.directives.get('dirty');
+
+  if (directive.modifiers.includes('class')) {
+    var classes = directive.value.split(' ');
+
+    if (directive.modifiers.includes('remove') !== isDirty) {
+      var _el$classList;
+
+      (_el$classList = el.classList).add.apply(_el$classList, _toConsumableArray(classes));
+    } else {
+      var _el$classList2;
+
+      (_el$classList2 = el.classList).remove.apply(_el$classList2, _toConsumableArray(classes));
     }
-  }, {
-    key: "receiveMessage",
-    value: function receiveMessage(payload) {
-      var response = this.messageInTransit.storeResponse(payload);
-      this.data = response.data;
-      this.children = response.children; // This means "$this->redirect()" was called in the component. let's just bail and redirect.
+  } else if (directive.modifiers.includes('attr')) {
+    if (directive.modifiers.includes('remove') !== isDirty) {
+      el.setAttribute(directive.value, true);
+    } else {
+      el.removeAttrsibute(directive.value);
+    }
+  } else if (!el.directives.get('model')) {
+    el.el.style.display = isDirty ? 'inline-block' : 'none';
+  }
+}
 
-      if (response.redirectTo) {
-        window.location.href = response.redirectTo;
-        return;
-      }
+/***/ }),
 
-      this.replaceDom(response.dom, response.dirtyInputs);
-      this.forceRefreshDataBoundElementsMarkedAsDirty(response.dirtyInputs);
-      this.unsetLoading(this.messageInTransit.loadingEls);
-      this.messageInTransit = null;
+/***/ "./src/js/component/LoadingStates.js":
+/*!*******************************************!*\
+  !*** ./src/js/component/LoadingStates.js ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-      if (response.eventQueue && response.eventQueue.length > 0) {
-        response.eventQueue.forEach(function (event) {
-          _store__WEBPACK_IMPORTED_MODULE_7__["default"].emit.apply(_store__WEBPACK_IMPORTED_MODULE_7__["default"], [event.event].concat(_toConsumableArray(event.params)));
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('componentInitialized', function (component) {
+    component.loadingElsByRef = {};
+    component.loadingEls = [];
+    component.currentlyActiveLoadingEls = [];
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('elementInitialized', function (el, component) {
+    if (el.directives.missing('loading')) return;
+    var directive = el.directives.get('loading');
+    var refNames = el.directives.get('target') && el.directives.get('target').value.split(',').map(function (s) {
+      return s.trim();
+    });
+    addLoadingEl(component, el, directive.value, refNames, directive.modifiers.includes('remove'));
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('messageSent', function (component, message) {
+    setLoading(component, message.refs);
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('messageFailed', function (component) {
+    unsetLoading(component);
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('responseReceived', function (component) {
+    unsetLoading(component);
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('elementRemoved', function (el, component) {
+    removeLoadingEl(component, el);
+  });
+});
+
+function addLoadingEl(component, el, value, targetNames, remove) {
+  if (targetNames) {
+    targetNames.forEach(function (targetNames) {
+      if (component.loadingElsByRef[targetNames]) {
+        component.loadingElsByRef[targetNames].push({
+          el: el,
+          value: value,
+          remove: remove
         });
+      } else {
+        component.loadingElsByRef[targetNames] = [{
+          el: el,
+          value: value,
+          remove: remove
+        }];
       }
-    }
-  }, {
-    key: "forceRefreshDataBoundElementsMarkedAsDirty",
-    value: function forceRefreshDataBoundElementsMarkedAsDirty(dirtyInputs) {
-      var _this2 = this;
+    });
+  } else {
+    component.loadingEls.push({
+      el: el,
+      value: value,
+      remove: remove
+    });
+  }
+}
 
-      this.walk(function (el) {
-        if (el.directives.missing('model')) return;
-        var modelValue = el.directives.get('model').value;
-        if (el.isFocused() && !dirtyInputs.includes(modelValue)) return;
-        el.setInputValueFromModel(_this2);
-      });
-    }
-  }, {
-    key: "replaceDom",
-    value: function replaceDom(rawDom) {
-      this.handleMorph(this.formatDomBeforeDiffToAvoidConflictsWithVue(rawDom.trim()));
-    }
-  }, {
-    key: "formatDomBeforeDiffToAvoidConflictsWithVue",
-    value: function formatDomBeforeDiffToAvoidConflictsWithVue(inputDom) {
-      if (!window.Vue) return inputDom;
-      var div = document.createElement('div');
-      div.innerHTML = inputDom;
-      new window.Vue().$mount(div.firstElementChild);
-      return div.firstElementChild.outerHTML;
-    }
-  }, {
-    key: "handleMorph",
-    value: function handleMorph(dom) {
-      var _this3 = this;
+function removeLoadingEl(component, el) {
+  component.loadingEls = component.loadingEls.filter(function (loadingEl) {
+    return !loadingEl.el.isSameNode(el);
+  });
 
-      Object(_dom_morphdom__WEBPACK_IMPORTED_MODULE_2__["default"])(this.el.rawNode(), dom, {
-        childrenOnly: true,
-        getNodeKey: function getNodeKey(node) {
-          // This allows the tracking of elements by the "key" attribute, like in VueJs.
-          return node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":key")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":key")) // If no "key", then first check for "wire:id", then "wire:model", then "id"
-          : node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":id")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":id")) : node.hasAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":model")) ? node.getAttribute("".concat(_dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].prefix, ":model")) : node.id;
-        },
-        onBeforeNodeAdded: function onBeforeNodeAdded(node) {
-          return new _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__["default"](node).transitionElementIn();
-        },
-        onBeforeNodeDiscarded: function onBeforeNodeDiscarded(node) {
-          return new _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__["default"](node).transitionElementOut(function (nodeDiscarded) {
-            // Cleanup after removed element.
-            _this3.removeLoadingEl(nodeDiscarded);
-          });
-        },
-        onBeforeElChildrenUpdated: function onBeforeElChildrenUpdated(node) {//
-        },
-        onBeforeElUpdated: function onBeforeElUpdated(from, to) {
-          var fromEl = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__["default"](from); // Honor the "wire:ignore" attribute.
+  if (el.ref in component.loadingElsByRef) {
+    delete component.loadingElsByRef[el.ref];
+  }
+}
 
-          if (fromEl.hasAttribute('ignore')) return false; // Children will update themselves.
+function setLoading(component, refs) {
+  var refEls = refs.map(function (ref) {
+    return component.loadingElsByRef[ref];
+  }).filter(function (el) {
+    return el;
+  }).flat();
+  var allEls = component.loadingEls.concat(refEls);
+  allEls.forEach(function (el) {
+    var directive = el.el.directives.get('loading');
+    el = el.el.el; // I'm so sorry @todo
 
-          if (fromEl.isComponentRootEl() && fromEl.getAttribute('id') !== _this3.id) return false; // Don't touch Vue components
+    if (directive.modifiers.includes('class')) {
+      // This is because wire:loading.class="border border-red"
+      // wouldn't work with classList.add.
+      var classes = directive.value.split(' ');
 
-          if (fromEl.isVueComponent()) return false;
-        },
-        onElUpdated: function onElUpdated(node) {//
-        },
-        onNodeDiscarded: function onNodeDiscarded(node) {
-          // Elements with loading directives are stored, release this
-          // element from storage because it no longer exists on the DOM.
-          _this3.removeLoadingEl(node);
-        },
-        onNodeAdded: function onNodeAdded(node) {
-          var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__["default"](node);
-          var closestComponentId = el.closestRoot().getAttribute('id');
+      if (directive.modifiers.includes('remove')) {
+        var _el$classList;
 
-          if (closestComponentId === _this3.id) {
-            _node_initializer__WEBPACK_IMPORTED_MODULE_6__["default"].initialize(el, _this3);
-          } else if (el.isComponentRootEl()) {
-            _store__WEBPACK_IMPORTED_MODULE_7__["default"].addComponent(new Component(el, _this3.connection));
-          } // Skip.
+        (_el$classList = el.classList).remove.apply(_el$classList, _toConsumableArray(classes));
+      } else {
+        var _el$classList2;
 
-        }
-      });
-    }
-  }, {
-    key: "walk",
-    value: function walk(callback) {
-      var _this4 = this;
-
-      var callbackWhenNewComponentIsEncountered = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function (el) {};
-
-      Object(_util__WEBPACK_IMPORTED_MODULE_1__["walk"])(this.el.rawNode(), function (node) {
-        var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_4__["default"](node); // Skip the root component element.
-
-        if (el.isSameNode(_this4.el)) return; // If we encounter a nested component, skip walking that tree.
-
-        if (el.isComponentRootEl()) {
-          callbackWhenNewComponentIsEncountered(el);
-          return false;
-        }
-
-        callback(el);
-      });
-    }
-  }, {
-    key: "registerEchoListeners",
-    value: function registerEchoListeners() {
-      if (Array.isArray(this.events)) {
-        this.events.forEach(function (event) {
-          if (event.startsWith('echo')) {
-            if (typeof Echo === 'undefined') {
-              console.warn('Laravel Echo cannot be found');
-              return;
-            }
-
-            var event_parts = event.split(/(echo:|echo-)|:|,/);
-
-            if (event_parts[1] == 'echo:') {
-              event_parts.splice(2, 0, 'channel', undefined);
-            }
-
-            if (event_parts[2] == 'notification') {
-              event_parts.push(undefined, undefined);
-            }
-
-            var _event_parts = _slicedToArray(event_parts, 7),
-                s1 = _event_parts[0],
-                signature = _event_parts[1],
-                channel_type = _event_parts[2],
-                s2 = _event_parts[3],
-                channel = _event_parts[4],
-                s3 = _event_parts[5],
-                event_name = _event_parts[6];
-
-            if (['channel', 'private'].includes(channel_type)) {
-              Echo[channel_type](channel).listen(event_name, function (e) {
-                _store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, e);
-              });
-            } else if (channel_type == 'presence') {
-              Echo.join(channel)[event_name](function (e) {
-                _store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, e);
-              });
-            } else if (channel_type == 'notification') {
-              Echo.private(channel).notification(function (notification) {
-                _store__WEBPACK_IMPORTED_MODULE_7__["default"].emit(event, notification);
-              });
-            } else {
-              console.warn('Echo channel type not yet supported');
-            }
-          }
-        });
+        (_el$classList2 = el.classList).add.apply(_el$classList2, _toConsumableArray(classes));
       }
+    } else if (directive.modifiers.includes('attr')) {
+      if (directive.modifiers.includes('remove')) {
+        el.removeAttribute(directive.value);
+      } else {
+        el.setAttribute(directive.value, true);
+      }
+    } else {
+      el.style.display = 'inline-block';
     }
-  }, {
-    key: "el",
-    get: function get() {
-      return _dom_dom__WEBPACK_IMPORTED_MODULE_3__["default"].getByAttributeAndValue('id', this.id);
+  });
+  component.currentlyActiveLoadingEls = allEls;
+}
+
+function unsetLoading(component) {
+  component.currentlyActiveLoadingEls.forEach(function (el) {
+    var directive = el.el.directives.get('loading');
+    el = el.el.el; // I'm so sorry @todo
+
+    if (directive.modifiers.includes('class')) {
+      var classes = directive.value.split(' ');
+
+      if (directive.modifiers.includes('remove')) {
+        var _el$classList3;
+
+        (_el$classList3 = el.classList).add.apply(_el$classList3, _toConsumableArray(classes));
+      } else {
+        var _el$classList4;
+
+        (_el$classList4 = el.classList).remove.apply(_el$classList4, _toConsumableArray(classes));
+      }
+    } else if (directive.modifiers.includes('attr')) {
+      if (directive.modifiers.includes('remove')) {
+        el.setAttribute(directive.value);
+      } else {
+        el.removeAttribute(directive.value, true);
+      }
+    } else {
+      el.style.display = 'none';
     }
-  }]);
+  });
+  component.currentlyActiveLoadingEls = [];
+}
 
-  return Component;
-}();
+/***/ }),
 
-Object(_util__WEBPACK_IMPORTED_MODULE_1__["addMixin"])(Component, _handle_loading_directives__WEBPACK_IMPORTED_MODULE_5__["default"]);
-/* harmony default export */ __webpack_exports__["default"] = (Component);
+/***/ "./src/js/component/OfflineStates.js":
+/*!*******************************************!*\
+  !*** ./src/js/component/OfflineStates.js ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+
+var offlineEls = [];
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('elementInitialized', function (el) {
+    if (el.directives.missing('offline')) return;
+    offlineEls.push(el);
+  });
+  window.addEventListener('offline', function () {
+    _Store__WEBPACK_IMPORTED_MODULE_0__["default"].livewireIsOffline = true;
+    offlineEls.forEach(function (el) {
+      toggleOffline(el, true);
+    });
+  });
+  window.addEventListener('online', function () {
+    _Store__WEBPACK_IMPORTED_MODULE_0__["default"].livewireIsOffline = false;
+    offlineEls.forEach(function (el) {
+      toggleOffline(el, false);
+    });
+  });
+  _Store__WEBPACK_IMPORTED_MODULE_0__["default"].registerHook('elementRemoved', function (el) {
+    offlineEls = offlineEls.filter(function (el) {
+      return !el.isSameNode(el);
+    });
+  });
+});
+
+function toggleOffline(el, isOffline) {
+  var directive = el.directives.get('offline');
+
+  if (directive.modifiers.includes('class')) {
+    var classes = directive.value.split(' ');
+
+    if (directive.modifiers.includes('remove') !== isOffline) {
+      var _el$rawNode$classList;
+
+      (_el$rawNode$classList = el.rawNode().classList).add.apply(_el$rawNode$classList, _toConsumableArray(classes));
+    } else {
+      var _el$rawNode$classList2;
+
+      (_el$rawNode$classList2 = el.rawNode().classList).remove.apply(_el$rawNode$classList2, _toConsumableArray(classes));
+    }
+  } else if (directive.modifiers.includes('attr')) {
+    if (directive.modifiers.includes('remove') !== isOffline) {
+      el.rawNode().setAttribute(directive.value, true);
+    } else {
+      el.rawNode().removeAttribute(directive.value);
+    }
+  } else if (!el.directives.get('model')) {
+    el.rawNode().style.display = isOffline ? 'inline-block' : 'none';
+  }
+}
+
+/***/ }),
+
+/***/ "./src/js/component/Polling.js":
+/*!*************************************!*\
+  !*** ./src/js/component/Polling.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _action_method__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/action/method */ "./src/js/action/method.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+
+
+/* harmony default export */ __webpack_exports__["default"] = (function () {
+  _Store__WEBPACK_IMPORTED_MODULE_1__["default"].registerHook('elementInitialized', function (el, component) {
+    if (el.directives.missing('poll')) return;
+    fireActionOnInterval(el, component);
+  });
+});
+
+function fireActionOnInterval(el, component) {
+  var directive = el.directives.get('poll');
+  var method = directive.method || '$refresh';
+  setInterval(function () {
+    // Don't poll when the tab is in the background.
+    // The "Math.random" business effectivlly prevents 95% of requests
+    // from executing. We still want "some" requests to get through.
+    if (_Store__WEBPACK_IMPORTED_MODULE_1__["default"].livewireIsInBackground && Math.random() < .95) return; // Don't poll if livewire is offline as well.
+
+    if (_Store__WEBPACK_IMPORTED_MODULE_1__["default"].livewireIsOffline) return;
+    component.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_0__["default"](method, directive.params, el));
+  }, directive.durationOr(2000));
+}
 
 /***/ }),
 
@@ -685,20 +3040,11 @@ __webpack_require__.r(__webpack_exports__);
   onMessage: null,
   init: function init() {//
   },
-  keepAlive: function keepAlive() {
-    fetch('/livewire/keep-alive', {
-      credentials: "same-origin",
-      headers: {
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-        'X-Livewire-Keep-Alive': true
-      }
-    });
-  },
   sendMessage: function sendMessage(payload) {
     var _this = this;
 
     // Forward the query string for the ajax requests.
-    fetch('/livewire/message' + window.location.search, {
+    fetch("".concat(window.livewire_app_url, "/livewire/message/").concat(payload.name).concat(window.location.search), {
       method: 'POST',
       body: JSON.stringify(payload),
       // This enables "cookies".
@@ -712,7 +3058,13 @@ __webpack_require__.r(__webpack_exports__);
     }).then(function (response) {
       if (response.ok) {
         response.text().then(function (response) {
-          _this.onMessage.call(_this, JSON.parse(response));
+          if (_this.isOutputFromDump(response)) {
+            _this.onError(payload);
+
+            _this.showHtmlModal(response);
+          } else {
+            _this.onMessage.call(_this, JSON.parse(response));
+          }
         });
       } else {
         response.text().then(function (response) {
@@ -721,9 +3073,12 @@ __webpack_require__.r(__webpack_exports__);
           _this.showHtmlModal(response);
         });
       }
-    }).catch(function () {
+    })["catch"](function () {
       _this.onError(payload);
     });
+  },
+  isOutputFromDump: function isOutputFromDump(output) {
+    return !!output.match(/<script>Sfdump\(".+"\)<\/script>/);
   },
   getCSRFToken: function getCSRFToken() {
     var tokenTag = document.head.querySelector('meta[name="csrf-token"]');
@@ -759,7 +3114,7 @@ __webpack_require__.r(__webpack_exports__);
     modal.style.backgroundColor = 'rgba(0, 0, 0, .6)';
     modal.style.zIndex = 200000;
     var iframe = document.createElement('iframe');
-    iframe.style.backgroundColor = 'white';
+    iframe.style.backgroundColor = '#17161A';
     iframe.style.borderRadius = '5px';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
@@ -816,7 +3171,7 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Connection; });
 /* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util */ "./src/js/util/index.js");
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../store */ "./src/js/store.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../Store */ "./src/js/Store.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -842,15 +3197,7 @@ function () {
 
     this.driver.onError = function (payload) {
       _this.onError(payload);
-    }; // This prevents those annoying CSRF 419's by keeping the cookie fresh.
-    // Yum! No one likes stale cookies...
-
-
-    if (typeof this.driver.keepAlive !== 'undefined') {
-      setInterval(function () {
-        _this.driver.keepAlive();
-      }, 600000); // Every ten minutes.
-    }
+    };
 
     this.driver.init();
   }
@@ -858,18 +3205,21 @@ function () {
   _createClass(Connection, [{
     key: "onMessage",
     value: function onMessage(payload) {
-      _store__WEBPACK_IMPORTED_MODULE_1__["default"].findComponent(payload.id).receiveMessage(payload);
-      Object(_util__WEBPACK_IMPORTED_MODULE_0__["dispatch"])('livewire:update');
+      if (payload.fromPrefetch) {
+        _Store__WEBPACK_IMPORTED_MODULE_1__["default"].findComponent(payload.id).receivePrefetchMessage(payload);
+      } else {
+        _Store__WEBPACK_IMPORTED_MODULE_1__["default"].findComponent(payload.id).receiveMessage(payload);
+        Object(_util__WEBPACK_IMPORTED_MODULE_0__["dispatch"])('livewire:update');
+      }
     }
   }, {
     key: "onError",
     value: function onError(payloadThatFailedSending) {
-      _store__WEBPACK_IMPORTED_MODULE_1__["default"].findComponent(payloadThatFailedSending.id).messageSendFailed();
+      _Store__WEBPACK_IMPORTED_MODULE_1__["default"].findComponent(payloadThatFailedSending.id).messageSendFailed();
     }
   }, {
     key: "sendMessage",
     value: function sendMessage(message) {
-      message.prepareForSend();
       this.driver.sendMessage(message.payload());
     }
   }]);
@@ -920,10 +3270,10 @@ function () {
     value: function durationOr(defaultDuration) {
       var durationInMilliSeconds;
       var durationInMilliSecondsString = this.modifiers.find(function (mod) {
-        return mod.match(/(.*)ms/);
+        return mod.match(/([0-9]+)ms/);
       });
       var durationInSecondsString = this.modifiers.find(function (mod) {
-        return mod.match(/(.*)s/);
+        return mod.match(/([0-9]+)s/);
       });
 
       if (durationInMilliSecondsString) {
@@ -939,7 +3289,7 @@ function () {
     value: function parseOutMethodAndParams(rawMethod) {
       var method = rawMethod;
       var params = [];
-      var methodAndParamString = method.match(/(.*)\((.*)\)/);
+      var methodAndParamString = method.match(/(.*?)\((.*)\)/);
 
       if (methodAndParamString) {
         // This "$event" is for use inside the livewire event handler.
@@ -954,6 +3304,16 @@ function () {
         method: method,
         params: params
       };
+    }
+  }, {
+    key: "cardinalDirectionOr",
+    value: function cardinalDirectionOr() {
+      var fallback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'right';
+      if (this.modifiers.includes('up')) return 'up';
+      if (this.modifiers.includes('down')) return 'down';
+      if (this.modifiers.includes('left')) return 'left';
+      if (this.modifiers.includes('right')) return 'right';
+      return fallback;
     }
   }, {
     key: "value",
@@ -1027,42 +3387,44 @@ function () {
   _createClass(_default, [{
     key: "all",
     value: function all() {
-      return Object.values(this.directives);
+      return this.directives;
     }
   }, {
     key: "has",
     value: function has(type) {
-      return Object.keys(this.directives).includes(type);
+      return this.directives.map(function (directive) {
+        return directive.type;
+      }).includes(type);
     }
   }, {
     key: "missing",
     value: function missing(type) {
-      return !Object.keys(this.directives).includes(type);
+      return !this.has(type);
     }
   }, {
     key: "get",
     value: function get(type) {
-      return this.directives[type];
+      return this.directives.find(function (directive) {
+        return directive.type === type;
+      });
     }
   }, {
     key: "extractTypeModifiersAndValue",
     value: function extractTypeModifiersAndValue() {
       var _this = this;
 
-      var directives = {};
-      this.el.getAttributeNames() // Filter only the livewire directives.
+      return Array.from(this.el.getAttributeNames() // Filter only the livewire directives.
       .filter(function (name) {
         return name.match(new RegExp(prefix + ':'));
       }) // Parse out the type, modifiers, and value from it.
-      .forEach(function (name) {
+      .map(function (name) {
         var _name$replace$split = name.replace(new RegExp(prefix + ':'), '').split('.'),
             _name$replace$split2 = _toArray(_name$replace$split),
             type = _name$replace$split2[0],
             modifiers = _name$replace$split2.slice(1);
 
-        directives[type] = new _directive__WEBPACK_IMPORTED_MODULE_0__["default"](type, modifiers, name, _this.el);
-      });
-      return directives;
+        return new _directive__WEBPACK_IMPORTED_MODULE_0__["default"](type, modifiers, name, _this.el);
+      }));
     }
   }]);
 
@@ -1167,11 +3529,14 @@ function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return DOMElement; });
 /* harmony import */ var _directive_manager__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./directive_manager */ "./src/js/dom/directive_manager.js");
+/* harmony import */ var get_value__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! get-value */ "./node_modules/get-value/index.js");
+/* harmony import */ var get_value__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(get_value__WEBPACK_IMPORTED_MODULE_1__);
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 
 
 
@@ -1219,11 +3584,12 @@ function () {
       }
 
       if (directive.modifiers.includes('fade')) {
-        this.el.style.opacity = 0;
-        this.el.style.transition = "opacity ".concat(directive.durationOr(300) / 1000, "s ease");
-        this.nextFrame(function () {
-          _this2.el.style.opacity = 1;
-        });
+        this.fadeIn(directive);
+        return;
+      }
+
+      if (directive.modifiers.includes('slide')) {
+        this.slideIn(directive);
         return;
       }
 
@@ -1252,14 +3618,12 @@ function () {
       }
 
       if (directive.modifiers.includes('fade')) {
-        this.nextFrame(function () {
-          _this3.el.style.opacity = 0;
-          setTimeout(function () {
-            onDiscarded(_this3.el);
+        this.fadeOut(directive, onDiscarded);
+        return false;
+      }
 
-            _this3.el.remove();
-          }, directive.durationOr(300));
-        });
+      if (directive.modifiers.includes('slide')) {
+        this.slideOut(directive, onDiscarded);
         return false;
       }
 
@@ -1276,6 +3640,71 @@ function () {
         }, duration);
       });
       return false;
+    }
+  }, {
+    key: "fadeIn",
+    value: function fadeIn(directive) {
+      var _this4 = this;
+
+      this.el.style.opacity = 0;
+      this.el.style.transition = "opacity ".concat(directive.durationOr(300) / 1000, "s ease");
+      this.nextFrame(function () {
+        _this4.el.style.opacity = 1;
+      });
+    }
+  }, {
+    key: "slideIn",
+    value: function slideIn(directive) {
+      var _this5 = this;
+
+      var directions = {
+        up: 'translateY(10px)',
+        down: 'translateY(-10px)',
+        left: 'translateX(-10px)',
+        right: 'translateX(10px)'
+      };
+      this.el.style.opacity = 0;
+      this.el.style.transform = directions[directive.cardinalDirectionOr('right')];
+      this.el.style.transition = "opacity ".concat(directive.durationOr(300) / 1000, "s ease, transform ").concat(directive.durationOr(300) / 1000, "s ease");
+      this.nextFrame(function () {
+        _this5.el.style.opacity = 1;
+        _this5.el.style.transform = "";
+      });
+    }
+  }, {
+    key: "fadeOut",
+    value: function fadeOut(directive, onDiscarded) {
+      var _this6 = this;
+
+      this.nextFrame(function () {
+        _this6.el.style.opacity = 0;
+        setTimeout(function () {
+          onDiscarded(_this6.el);
+
+          _this6.el.remove();
+        }, directive.durationOr(300));
+      });
+    }
+  }, {
+    key: "slideOut",
+    value: function slideOut(directive, onDiscarded) {
+      var _this7 = this;
+
+      var directions = {
+        up: 'translateY(10px)',
+        down: 'translateY(-10px)',
+        left: 'translateX(-10px)',
+        right: 'translateX(10px)'
+      };
+      this.nextFrame(function () {
+        _this7.el.style.opacity = 0;
+        _this7.el.style.transform = directions[directive.cardinalDirectionOr('right')];
+        setTimeout(function () {
+          onDiscarded(_this7.el);
+
+          _this7.el.remove();
+        }, directive.durationOr(300));
+      });
     }
   }, {
     key: "closestRoot",
@@ -1313,6 +3742,11 @@ function () {
       return this.el.getAttribute("".concat(prefix, ":").concat(attribute));
     }
   }, {
+    key: "removeAttribute",
+    value: function removeAttribute(attribute) {
+      return this.el.removeAttribute("".concat(prefix, ":").concat(attribute));
+    }
+  }, {
     key: "setAttribute",
     value: function setAttribute(attribute, value) {
       return this.el.setAttribute("".concat(prefix, ":").concat(attribute), value);
@@ -1328,17 +3762,6 @@ function () {
       return this.el === document.activeElement;
     }
   }, {
-    key: "preserveValueAttributeIfNotDirty",
-    value: function preserveValueAttributeIfNotDirty(fromEl, dirtyInputs) {
-      if (this.directives.missing('model')) return; // If the input is not dirty && the input element is focused, keep the
-      // value the same, but change other attributes.
-
-      if (!Array.from(dirtyInputs).includes(this.directives.get('model').value) && fromEl.isFocused()) {
-        // Transfer the current "fromEl" value (preserving / overriding it).
-        this.setInputValue(fromEl.valueFromInput());
-      }
-    }
-  }, {
     key: "isInput",
     value: function isInput() {
       return ['INPUT', 'TEXTAREA', 'SELECT'].includes(this.el.tagName.toUpperCase());
@@ -1350,8 +3773,25 @@ function () {
     }
   }, {
     key: "valueFromInput",
-    value: function valueFromInput() {
+    value: function valueFromInput(component) {
+      var _this8 = this;
+
       if (this.el.type === 'checkbox') {
+        var modelName = this.directives.get('model').value;
+        var modelValue = get_value__WEBPACK_IMPORTED_MODULE_1___default()(component.data, modelName);
+
+        if (Array.isArray(modelValue)) {
+          if (this.el.checked) {
+            modelValue = modelValue.includes(this.el.value) ? modelValue : modelValue.concat(this.el.value);
+          } else {
+            modelValue = modelValue.filter(function (item) {
+              return item !== _this8.el.value;
+            });
+          }
+
+          return modelValue;
+        }
+
         return this.el.checked;
       } else if (this.el.tagName === 'SELECT' && this.el.multiple) {
         return this.getSelectValues();
@@ -1363,10 +3803,7 @@ function () {
     key: "setInputValueFromModel",
     value: function setInputValueFromModel(component) {
       var modelString = this.directives.get('model').value;
-      var modelStringWithArraySyntaxForNumericKeys = modelString.replace(/\.([0-9]+)/, function (match, num) {
-        return "[".concat(num, "]");
-      });
-      var modelValue = eval('component.data.' + modelStringWithArraySyntaxForNumericKeys);
+      var modelValue = get_value__WEBPACK_IMPORTED_MODULE_1___default()(component.data, modelString);
       if (modelValue === undefined) return;
       this.setInputValue(modelValue);
     }
@@ -1384,7 +3821,13 @@ function () {
       } else if (this.el.type === 'radio') {
         this.el.checked = this.el.value == value;
       } else if (this.el.type === 'checkbox') {
-        this.el.checked = !!value;
+        if (Array.isArray(value)) {
+          if (value.includes(this.el.value)) {
+            this.el.checked = true;
+          }
+        } else {
+          this.el.checked = !!value;
+        }
       } else if (this.el.tagName === 'SELECT') {
         this.updateSelect(value);
       } else {
@@ -1403,7 +3846,9 @@ function () {
   }, {
     key: "updateSelect",
     value: function updateSelect(value) {
-      var arrayWrappedValue = [].concat(value);
+      var arrayWrappedValue = [].concat(value).map(function (value) {
+        return value + '';
+      });
       Array.from(this.el.options).forEach(function (option) {
         option.selected = arrayWrappedValue.includes(option.value);
       });
@@ -1434,18 +3879,25 @@ function () {
       return (_this$el2 = this.el).addEventListener.apply(_this$el2, arguments);
     }
   }, {
-    key: "querySelector",
-    value: function querySelector() {
+    key: "removeEventListener",
+    value: function removeEventListener() {
       var _this$el3;
 
-      return (_this$el3 = this.el).querySelector.apply(_this$el3, arguments);
+      return (_this$el3 = this.el).removeEventListener.apply(_this$el3, arguments);
+    }
+  }, {
+    key: "querySelector",
+    value: function querySelector() {
+      var _this$el4;
+
+      return (_this$el4 = this.el).querySelector.apply(_this$el4, arguments);
     }
   }, {
     key: "querySelectorAll",
     value: function querySelectorAll() {
-      var _this$el4;
+      var _this$el5;
 
-      return (_this$el4 = this.el).querySelectorAll.apply(_this$el4, arguments);
+      return (_this$el5 = this.el).querySelectorAll.apply(_this$el5, arguments);
     }
   }, {
     key: "ref",
@@ -1494,14 +3946,11 @@ var morphdom = Object(_morphdom__WEBPACK_IMPORTED_MODULE_1__["default"])(_morphA
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return morphAttrs; });
-/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util */ "./src/js/dom/morphdom/util.js");
-
 /**
  * I don't want to look at "value" attributes when diffing.
  * I commented out all the lines that compare "value"
  *
  */
-
 function morphAttrs(fromNode, toNode) {
   var attrs = toNode.attributes;
   var i;
@@ -1509,7 +3958,7 @@ function morphAttrs(fromNode, toNode) {
   var attrName;
   var attrNamespaceURI;
   var attrValue;
-  var fromValue;
+  var fromValue; // update attributes on original DOM element
 
   for (i = attrs.length - 1; i >= 0; --i) {
     attr = attrs[i];
@@ -1522,6 +3971,10 @@ function morphAttrs(fromNode, toNode) {
       fromValue = fromNode.getAttributeNS(attrNamespaceURI, attrName);
 
       if (fromValue !== attrValue) {
+        if (attr.prefix === 'xmlns') {
+          attrName = attr.name; // It's not allowed to set an attribute with the XMLNS namespace without specifying the `xmlns` prefix
+        }
+
         fromNode.setAttributeNS(attrNamespaceURI, attrName, attrValue);
       }
     } else {
@@ -1547,11 +4000,11 @@ function morphAttrs(fromNode, toNode) {
       if (attrNamespaceURI) {
         attrName = attr.localName || attrName;
 
-        if (!Object(_util__WEBPACK_IMPORTED_MODULE_0__["hasAttributeNS"])(toNode, attrNamespaceURI, attrName)) {
+        if (!toNode.hasAttributeNS(attrNamespaceURI, attrName)) {
           fromNode.removeAttributeNS(attrNamespaceURI, attrName);
         }
       } else {
-        if (!Object(_util__WEBPACK_IMPORTED_MODULE_0__["hasAttributeNS"])(toNode, null, attrName)) {
+        if (!toNode.hasAttribute(attrName)) {
           fromNode.removeAttribute(attrName);
         }
       }
@@ -1581,12 +4034,14 @@ __webpack_require__.r(__webpack_exports__);
  *
  * 1) Changed all the "isSameNode"s to "isEqualNode"s so that morhing doesn't check by reference, only by equality.
  * 2) Automatically filter out any non-"ElementNode"s from the lifecycle hooks.
+ * 3) Tagged other changes with "@livewireModification".
  */
 
 
 
 
 var ELEMENT_NODE = 1;
+var DOCUMENT_FRAGMENT_NODE = 11;
 var TEXT_NODE = 3;
 var COMMENT_NODE = 8;
 
@@ -1597,8 +4052,7 @@ function defaultGetNodeKey(node) {
 }
 
 function callHook(hook) {
-  if (hook.name !== 'getNodeKey' && hook.name !== 'onBeforeElUpdated') {} // debugger
-  // console.log(hook.name, ...params)
+  if (hook.name !== 'getNodeKey' && hook.name !== 'onBeforeElUpdated') {} // console.log(hook.name, ...params)
   // Don't call hook on non-"DOMElement" elements.
 
 
@@ -1636,15 +4090,11 @@ function morphdomFactory(morphAttrs) {
     var onBeforeElChildrenUpdated = options.onBeforeElChildrenUpdated || noop;
     var childrenOnly = options.childrenOnly === true; // This object is used as a lookup to quickly find all keyed elements in the original DOM tree.
 
-    var fromNodesLookup = {};
-    var keyedRemovalList;
+    var fromNodesLookup = Object.create(null);
+    var keyedRemovalList = [];
 
     function addKeyedRemoval(key) {
-      if (keyedRemovalList) {
-        keyedRemovalList.push(key);
-      } else {
-        keyedRemovalList = [key];
-      }
+      keyedRemovalList.push(key);
     }
 
     function walkDiscardedChildNodes(node, skipKeyedNodes) {
@@ -1723,7 +4173,7 @@ function morphdomFactory(morphAttrs) {
 
 
     function indexTree(node) {
-      if (node.nodeType === ELEMENT_NODE) {
+      if (node.nodeType === ELEMENT_NODE || node.nodeType === DOCUMENT_FRAGMENT_NODE) {
         var curChild = node.firstChild;
 
         while (curChild) {
@@ -1764,26 +4214,51 @@ function morphdomFactory(morphAttrs) {
       }
     }
 
+    function cleanupFromEl(fromEl, curFromNodeChild, curFromNodeKey) {
+      // We have processed all of the "to nodes". If curFromNodeChild is
+      // non-null then we still have some from nodes left over that need
+      // to be removed
+      while (curFromNodeChild) {
+        var fromNextSibling = curFromNodeChild.nextSibling;
+
+        if (curFromNodeKey = callHook(getNodeKey, curFromNodeChild)) {
+          // Since the node is keyed it might be matched up later so we defer
+          // the actual removal to later
+          addKeyedRemoval(curFromNodeKey);
+        } else {
+          // NOTE: we skip nested keyed nodes from being removed since there is
+          //       still a chance they will be matched up later
+          removeNode(curFromNodeChild, fromEl, true
+          /* skip keyed nodes */
+          );
+        }
+
+        curFromNodeChild = fromNextSibling;
+      }
+    }
+
     function morphEl(fromEl, toEl, childrenOnly) {
       var toElKey = callHook(getNodeKey, toEl);
-      var curFromNodeKey;
 
       if (toElKey) {
-        // If an element with an ID is being morphed then it is will be in the final
+        // If an element with an ID is being morphed then it will be in the final
         // DOM so clear it out of the saved elements collection
         delete fromNodesLookup[toElKey];
-      }
-
-      if (toEl.isEqualNode && toEl.isEqualNode(fromEl)) {
-        return;
       }
 
       if (!childrenOnly) {
         if (callHook(onBeforeElUpdated, fromEl, toEl) === false) {
           return;
+        } // @livewireModification.
+        // I added this check to enable wire:ignore.self to not fire
+        // morphAttrs, but not skip updating children as well.
+        // A task that's currently impossible with the provided hooks.
+
+
+        if (!fromEl.skipElUpdatingButStillUpdateChildren) {
+          morphAttrs(fromEl, toEl);
         }
 
-        morphAttrs(fromEl, toEl);
         callHook(onElUpdated, fromEl);
 
         if (callHook(onBeforeElChildrenUpdated, fromEl, toEl) === false) {
@@ -1792,119 +4267,150 @@ function morphdomFactory(morphAttrs) {
       }
 
       if (fromEl.nodeName !== 'TEXTAREA') {
-        var curToNodeChild = toEl.firstChild;
-        var curFromNodeChild = fromEl.firstChild;
-        var curToNodeKey;
-        var fromNextSibling;
-        var toNextSibling;
-        var matchingFromEl;
+        morphChildren(fromEl, toEl);
+      } else {
+        _specialElHandlers__WEBPACK_IMPORTED_MODULE_1__["default"].TEXTAREA(fromEl, toEl);
+      }
+    }
 
-        outer: while (curToNodeChild) {
-          toNextSibling = curToNodeChild.nextSibling;
-          curToNodeKey = callHook(getNodeKey, curToNodeChild);
+    function morphChildren(fromEl, toEl) {
+      var curToNodeChild = toEl.firstChild;
+      var curFromNodeChild = fromEl.firstChild;
+      var curToNodeKey;
+      var curFromNodeKey;
+      var fromNextSibling;
+      var toNextSibling;
+      var matchingFromEl; // walk the children
 
-          while (curFromNodeChild) {
-            fromNextSibling = curFromNodeChild.nextSibling;
+      outer: while (curToNodeChild) {
+        toNextSibling = curToNodeChild.nextSibling;
+        curToNodeKey = callHook(getNodeKey, curToNodeChild); // walk the fromNode children all the way through
 
-            if (curToNodeChild.isEqualNode && curToNodeChild.isEqualNode(curFromNodeChild)) {
-              curToNodeChild = toNextSibling;
-              curFromNodeChild = fromNextSibling;
-              continue outer;
-            }
+        while (curFromNodeChild) {
+          fromNextSibling = curFromNodeChild.nextSibling;
 
-            curFromNodeKey = callHook(getNodeKey, curFromNodeChild);
-            var curFromNodeType = curFromNodeChild.nodeType;
-            var isCompatible = undefined;
+          if (curToNodeChild.isSameNode && curToNodeChild.isSameNode(curFromNodeChild)) {
+            curToNodeChild = toNextSibling;
+            curFromNodeChild = fromNextSibling;
+            continue outer;
+          }
 
-            if (curFromNodeType === curToNodeChild.nodeType) {
-              if (curFromNodeType === ELEMENT_NODE) {
-                // Both nodes being compared are Element nodes
-                if (curToNodeKey) {
-                  // The target node has a key so we want to match it up with the correct element
-                  // in the original DOM tree
-                  if (curToNodeKey !== curFromNodeKey) {
-                    // The current element in the original DOM tree does not have a matching key so
-                    // let's check our lookup to see if there is a matching element in the original
-                    // DOM tree
-                    if (matchingFromEl = fromNodesLookup[curToNodeKey]) {
-                      if (curFromNodeChild.nextSibling === matchingFromEl) {
-                        // Special case for single element removals. To avoid removing the original
-                        // DOM node out of the tree (since that can break CSS transitions, etc.),
-                        // we will instead discard the current node and wait until the next
-                        // iteration to properly match up the keyed target element with its matching
-                        // element in the original tree
-                        isCompatible = false;
-                      } else {
-                        // We found a matching keyed element somewhere in the original DOM tree.
-                        // Let's moving the original DOM node into the current position and morph
-                        // it.
-                        // NOTE: We use insertBefore instead of replaceChild because we want to go through
-                        // the `removeNode()` function for the node that is being discarded so that
-                        // all lifecycle hooks are correctly invoked
-                        fromEl.insertBefore(matchingFromEl, curFromNodeChild);
-                        fromNextSibling = curFromNodeChild.nextSibling;
+          curFromNodeKey = callHook(getNodeKey, curFromNodeChild);
+          var curFromNodeType = curFromNodeChild.nodeType; // this means if the curFromNodeChild doesnt have a match with the curToNodeChild
 
-                        if (curFromNodeKey) {
-                          // Since the node is keyed it might be matched up later so we defer
-                          // the actual removal to later
-                          addKeyedRemoval(curFromNodeKey);
-                        } else {
-                          // NOTE: we skip nested keyed nodes from being removed since there is
-                          //       still a chance they will be matched up later
-                          removeNode(curFromNodeChild, fromEl, true
-                          /* skip keyed nodes */
-                          );
-                        }
+          var isCompatible = undefined;
 
-                        curFromNodeChild = matchingFromEl;
-                      }
-                    } else {
-                      // The nodes are not compatible since the "to" node has a key and there
-                      // is no matching keyed node in the source tree
+          if (curFromNodeType === curToNodeChild.nodeType) {
+            if (curFromNodeType === ELEMENT_NODE) {
+              // Both nodes being compared are Element nodes
+              if (curToNodeKey) {
+                // The target node has a key so we want to match it up with the correct element
+                // in the original DOM tree
+                if (curToNodeKey !== curFromNodeKey) {
+                  // The current element in the original DOM tree does not have a matching key so
+                  // let's check our lookup to see if there is a matching element in the original
+                  // DOM tree
+                  if (matchingFromEl = fromNodesLookup[curToNodeKey]) {
+                    if (fromNextSibling === matchingFromEl) {
+                      // Special case for single element removals. To avoid removing the original
+                      // DOM node out of the tree (since that can break CSS transitions, etc.),
+                      // we will instead discard the current node and wait until the next
+                      // iteration to properly match up the keyed target element with its matching
+                      // element in the original tree
                       isCompatible = false;
+                    } else {
+                      // We found a matching keyed element somewhere in the original DOM tree.
+                      // Let's move the original DOM node into the current position and morph
+                      // it.
+                      // NOTE: We use insertBefore instead of replaceChild because we want to go through
+                      // the `removeNode()` function for the node that is being discarded so that
+                      // all lifecycle hooks are correctly invoked
+                      fromEl.insertBefore(matchingFromEl, curFromNodeChild); // fromNextSibling = curFromNodeChild.nextSibling;
+
+                      if (curFromNodeKey) {
+                        // Since the node is keyed it might be matched up later so we defer
+                        // the actual removal to later
+                        addKeyedRemoval(curFromNodeKey);
+                      } else {
+                        // NOTE: we skip nested keyed nodes from being removed since there is
+                        //       still a chance they will be matched up later
+                        removeNode(curFromNodeChild, fromEl, true
+                        /* skip keyed nodes */
+                        );
+                      }
+
+                      curFromNodeChild = matchingFromEl;
                     }
+                  } else {
+                    // The nodes are not compatible since the "to" node has a key and there
+                    // is no matching keyed node in the source tree
+                    isCompatible = false;
                   }
-                } else if (curFromNodeKey) {
-                  // The original has a key
-                  isCompatible = false;
                 }
+              } else if (curFromNodeKey) {
+                // The original has a key
+                isCompatible = false;
+              }
 
-                isCompatible = isCompatible !== false && Object(_util__WEBPACK_IMPORTED_MODULE_0__["compareNodeNames"])(curFromNodeChild, curToNodeChild);
+              isCompatible = isCompatible !== false && Object(_util__WEBPACK_IMPORTED_MODULE_0__["compareNodeNames"])(curFromNodeChild, curToNodeChild);
 
-                if (isCompatible) {
+              if (isCompatible) {
+                // If the two nodes are different, but the next element is an exact match,
+                // we can assume that the new node is meant to be inserted, instead of
+                // used as a morph target.
+                // @livewireUpdate
+                if (!curToNodeChild.isEqualNode(curFromNodeChild) && curToNodeChild.nextElementSibling && curToNodeChild.nextElementSibling.isEqualNode(curFromNodeChild)) {
+                  isCompatible = false;
+                } else {
                   // We found compatible DOM elements so transform
                   // the current "from" node to match the current
                   // target DOM node.
+                  // MORPH
                   morphEl(curFromNodeChild, curToNodeChild);
                 }
-              } else if (curFromNodeType === TEXT_NODE || curFromNodeType == COMMENT_NODE) {
-                // Both nodes being compared are Text or Comment nodes
-                isCompatible = true; // Simply update nodeValue on the original node to
-                // change the text value
+              }
+            } else if (curFromNodeType === TEXT_NODE || curFromNodeType == COMMENT_NODE) {
+              // Both nodes being compared are Text or Comment nodes
+              isCompatible = true; // Simply update nodeValue on the original node to
+              // change the text value
 
-                if (curFromNodeChild.nodeValue !== curToNodeChild.nodeValue) {
-                  curFromNodeChild.nodeValue = curToNodeChild.nodeValue;
-                }
+              if (curFromNodeChild.nodeValue !== curToNodeChild.nodeValue) {
+                curFromNodeChild.nodeValue = curToNodeChild.nodeValue;
               }
             }
+          }
 
-            if (isCompatible) {
-              // Advance both the "to" child and the "from" child since we found a match
-              curToNodeChild = toNextSibling;
+          if (isCompatible) {
+            // Advance both the "to" child and the "from" child since we found a match
+            // Nothing else to do as we already recursively called morphChildren above
+            curToNodeChild = toNextSibling;
+            curFromNodeChild = fromNextSibling;
+            continue outer;
+          } // No compatible match so remove the old node from the DOM and continue trying to find a
+          // match in the original DOM. However, we only do this if the from node is not keyed
+          // since it is possible that a keyed node might match up with a node somewhere else in the
+          // target tree and we don't want to discard it just yet since it still might find a
+          // home in the final DOM tree. After everything is done we will remove any keyed nodes
+          // that didn't find a home
+
+
+          if (curFromNodeKey) {
+            // Since the node is keyed it might be matched up later so we defer
+            // the actual removal to later
+            addKeyedRemoval(curFromNodeKey);
+          } else {
+            // Before we just remove the original element, let's see if it's the very next
+            // element in the "to" list. If it is, we can assume we can insert the new
+            // element before the original one instead of removing it. This is kind of
+            // a "look-ahead".
+            // @livewireUpdate
+            if (curToNodeChild.nextElementSibling && curToNodeChild.nextElementSibling.isEqualNode(curFromNodeChild)) {
+              var nodeToBeAdded = curToNodeChild.cloneNode(true);
+              fromEl.insertBefore(nodeToBeAdded, curFromNodeChild);
+              handleNodeAdded(nodeToBeAdded);
+              curToNodeChild = curToNodeChild.nextElementSibling.nextSibling;
               curFromNodeChild = fromNextSibling;
               continue outer;
-            } // No compatible match so remove the old node from the DOM and continue trying to find a
-            // match in the original DOM. However, we only do this if the from node is not keyed
-            // since it is possible that a keyed node might match up with a node somewhere else in the
-            // target tree and we don't want to discard it just yet since it still might find a
-            // home in the final DOM tree. After everything is done we will remove any keyed nodes
-            // that didn't find a home
-
-
-            if (curFromNodeKey) {
-              // Since the node is keyed it might be matched up later so we defer
-              // the actual removal to later
-              addKeyedRemoval(curFromNodeKey);
             } else {
               // NOTE: we skip nested keyed nodes from being removed since there is
               //       still a chance they will be matched up later
@@ -1912,66 +4418,48 @@ function morphdomFactory(morphAttrs) {
               /* skip keyed nodes */
               );
             }
+          }
 
-            curFromNodeChild = fromNextSibling;
-          } // If we got this far then we did not find a candidate match for
-          // our "to node" and we exhausted all of the children "from"
-          // nodes. Therefore, we will just append the current "to" node
-          // to the end
+          curFromNodeChild = fromNextSibling;
+        } // END: while(curFromNodeChild) {}
+        // If we got this far then we did not find a candidate match for
+        // our "to node" and we exhausted all of the children "from"
+        // nodes. Therefore, we will just append the current "to" node
+        // to the end
 
 
-          if (curToNodeKey && (matchingFromEl = fromNodesLookup[curToNodeKey]) && Object(_util__WEBPACK_IMPORTED_MODULE_0__["compareNodeNames"])(matchingFromEl, curToNodeChild)) {
-            fromEl.appendChild(matchingFromEl);
-            morphEl(matchingFromEl, curToNodeChild);
-          } else {
-            var onBeforeNodeAddedResult = callHook(onBeforeNodeAdded, curToNodeChild);
+        if (curToNodeKey && (matchingFromEl = fromNodesLookup[curToNodeKey]) && Object(_util__WEBPACK_IMPORTED_MODULE_0__["compareNodeNames"])(matchingFromEl, curToNodeChild)) {
+          fromEl.appendChild(matchingFromEl); // MORPH
 
-            if (onBeforeNodeAddedResult !== false) {
-              if (onBeforeNodeAddedResult) {
-                curToNodeChild = onBeforeNodeAddedResult;
-              }
+          morphEl(matchingFromEl, curToNodeChild);
+        } else {
+          var onBeforeNodeAddedResult = callHook(onBeforeNodeAdded, curToNodeChild);
 
-              if (curToNodeChild.actualize) {
-                curToNodeChild = curToNodeChild.actualize(fromEl.ownerDocument || _util__WEBPACK_IMPORTED_MODULE_0__["doc"]);
-              }
-
-              fromEl.appendChild(curToNodeChild);
-              handleNodeAdded(curToNodeChild);
+          if (onBeforeNodeAddedResult !== false) {
+            if (onBeforeNodeAddedResult) {
+              curToNodeChild = onBeforeNodeAddedResult;
             }
+
+            if (curToNodeChild.actualize) {
+              curToNodeChild = curToNodeChild.actualize(fromEl.ownerDocument || _util__WEBPACK_IMPORTED_MODULE_0__["doc"]);
+            }
+
+            fromEl.appendChild(curToNodeChild);
+            handleNodeAdded(curToNodeChild);
           }
-
-          curToNodeChild = toNextSibling;
-          curFromNodeChild = fromNextSibling;
-        } // We have processed all of the "to nodes". If curFromNodeChild is
-        // non-null then we still have some from nodes left over that need
-        // to be removed
-
-
-        while (curFromNodeChild) {
-          fromNextSibling = curFromNodeChild.nextSibling;
-
-          if (curFromNodeKey = callHook(getNodeKey, curFromNodeChild)) {
-            // Since the node is keyed it might be matched up later so we defer
-            // the actual removal to later
-            addKeyedRemoval(curFromNodeKey);
-          } else {
-            // NOTE: we skip nested keyed nodes from being removed since there is
-            //       still a chance they will be matched up later
-            removeNode(curFromNodeChild, fromEl, true
-            /* skip keyed nodes */
-            );
-          }
-
-          curFromNodeChild = fromNextSibling;
         }
+
+        curToNodeChild = toNextSibling;
+        curFromNodeChild = fromNextSibling;
       }
 
+      cleanupFromEl(fromEl, curFromNodeChild, curFromNodeKey);
       var specialElHandler = _specialElHandlers__WEBPACK_IMPORTED_MODULE_1__["default"][fromEl.nodeName];
 
-      if (specialElHandler && !fromEl.hasAttribute('wire:model')) {
+      if (specialElHandler && !fromEl.isLivewireModel) {
         specialElHandler(fromEl, toEl);
       }
-    } // END: morphEl(...)
+    } // END: morphChildren(...)
 
 
     var morphedNode = fromNode;
@@ -2011,6 +4499,10 @@ function morphdomFactory(morphAttrs) {
       // toss out the "from node" and use the "to node"
       callHook(onNodeDiscarded, fromNode);
     } else {
+      if (toNode.isSameNode && toNode.isSameNode(morphedNode)) {
+        return;
+      }
+
       morphEl(morphedNode, toNode, childrenOnly); // We now need to loop over any keyed nodes that might need to be
       // removed. We only do the removal if we know that the keyed node
       // never found a match. When a keyed node is matched up we remove
@@ -2056,15 +4548,12 @@ function morphdomFactory(morphAttrs) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util */ "./src/js/dom/morphdom/util.js");
-
-
 function syncBooleanAttrProp(fromEl, toEl, name) {
   if (fromEl[name] !== toEl[name]) {
     fromEl[name] = toEl[name];
 
     if (fromEl[name]) {
-      fromEl.setAttribute(name, '');
+      fromEl.setAttribute(name);
     } else {
       fromEl.removeAttribute(name);
     }
@@ -2072,11 +4561,33 @@ function syncBooleanAttrProp(fromEl, toEl, name) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-  /**
-   * Needed for IE. Apparently IE doesn't think that "selected" is an
-   * attribute when reading over the attributes using selectEl.attributes
-   */
   OPTION: function OPTION(fromEl, toEl) {
+    var parentNode = fromEl.parentNode;
+
+    if (parentNode) {
+      var parentName = parentNode.nodeName.toUpperCase();
+
+      if (parentName === 'OPTGROUP') {
+        parentNode = parentNode.parentNode;
+        parentName = parentNode && parentNode.nodeName.toUpperCase();
+      }
+
+      if (parentName === 'SELECT' && !parentNode.hasAttribute('multiple')) {
+        if (fromEl.hasAttribute('selected') && !toEl.selected) {
+          // Workaround for MS Edge bug where the 'selected' attribute can only be
+          // removed if set to a non-empty value:
+          // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/12087679/
+          fromEl.setAttribute('selected', 'selected');
+          fromEl.removeAttribute('selected');
+        } // We have to reset select element's selectedIndex to -1, otherwise setting
+        // fromEl.selected using the syncBooleanAttrProp below has no effect.
+        // The correct selectedIndex will be set in the SELECT special handler below.
+
+
+        parentNode.selectedIndex = -1;
+      }
+    }
+
     syncBooleanAttrProp(fromEl, toEl, 'selected');
   },
 
@@ -2094,7 +4605,7 @@ function syncBooleanAttrProp(fromEl, toEl, name) {
       fromEl.value = toEl.value;
     }
 
-    if (!Object(_util__WEBPACK_IMPORTED_MODULE_0__["hasAttributeNS"])(toEl, null, 'value')) {
+    if (!toEl.hasAttribute('value')) {
       fromEl.removeAttribute('value');
     }
   },
@@ -2120,27 +4631,43 @@ function syncBooleanAttrProp(fromEl, toEl, name) {
     }
   },
   SELECT: function SELECT(fromEl, toEl) {
-    if (!Object(_util__WEBPACK_IMPORTED_MODULE_0__["hasAttributeNS"])(toEl, null, 'multiple')) {
+    if (!toEl.hasAttribute('multiple')) {
       var selectedIndex = -1;
-      var i = 0;
-      var curChild = toEl.firstChild;
+      var i = 0; // We have to loop through children of fromEl, not toEl since nodes can be moved
+      // from toEl to fromEl directly when morphing.
+      // At the time this special handler is invoked, all children have already been morphed
+      // and appended to / removed from fromEl, so using fromEl here is safe and correct.
+
+      var curChild = fromEl.firstChild;
+      var optgroup;
+      var nodeName;
 
       while (curChild) {
-        var nodeName = curChild.nodeName;
+        nodeName = curChild.nodeName && curChild.nodeName.toUpperCase();
 
-        if (nodeName && nodeName.toUpperCase() === 'OPTION') {
-          if (Object(_util__WEBPACK_IMPORTED_MODULE_0__["hasAttributeNS"])(curChild, null, 'selected')) {
-            selectedIndex = i;
-            break;
+        if (nodeName === 'OPTGROUP') {
+          optgroup = curChild;
+          curChild = optgroup.firstChild;
+        } else {
+          if (nodeName === 'OPTION') {
+            if (curChild.hasAttribute('selected')) {
+              selectedIndex = i;
+              break;
+            }
+
+            i++;
           }
 
-          i++;
-        }
+          curChild = curChild.nextSibling;
 
-        curChild = curChild.nextSibling;
+          if (!curChild && optgroup) {
+            curChild = optgroup.nextSibling;
+            optgroup = null;
+          }
+        }
       }
 
-      fromEl.selectedIndex = i;
+      fromEl.selectedIndex = selectedIndex;
     }
   }
 });
@@ -2151,13 +4678,12 @@ function syncBooleanAttrProp(fromEl, toEl, name) {
 /*!*************************************!*\
   !*** ./src/js/dom/morphdom/util.js ***!
   \*************************************/
-/*! exports provided: doc, hasAttributeNS, toElement, compareNodeNames, createElementNS, moveChildren */
+/*! exports provided: doc, toElement, compareNodeNames, createElementNS, moveChildren */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "doc", function() { return doc; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hasAttributeNS", function() { return hasAttributeNS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toElement", function() { return toElement; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "compareNodeNames", function() { return compareNodeNames; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createElementNS", function() { return createElementNS; });
@@ -2166,42 +4692,53 @@ var range; // Create a range object for efficently rendering strings to elements
 
 var NS_XHTML = 'http://www.w3.org/1999/xhtml';
 var doc = typeof document === 'undefined' ? undefined : document;
-var testEl = doc ? doc.body || doc.createElement('div') : {}; // Fixes <https://github.com/patrick-steele-idem/morphdom/issues/32>
-// (IE7+ support) <=IE7 does not support el.hasAttribute(name)
+var HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
+var HAS_RANGE_SUPPORT = !!doc && doc.createRange && 'createContextualFragment' in doc.createRange();
 
-var actualHasAttributeNS;
-
-if (testEl.hasAttributeNS) {
-  actualHasAttributeNS = function actualHasAttributeNS(el, namespaceURI, name) {
-    return el.hasAttributeNS(namespaceURI, name);
-  };
-} else if (testEl.hasAttribute) {
-  actualHasAttributeNS = function actualHasAttributeNS(el, namespaceURI, name) {
-    return el.hasAttribute(name);
-  };
-} else {
-  actualHasAttributeNS = function actualHasAttributeNS(el, namespaceURI, name) {
-    return el.getAttributeNode(namespaceURI, name) != null;
-  };
+function createFragmentFromTemplate(str) {
+  var template = doc.createElement('template');
+  template.innerHTML = str;
+  return template.content.childNodes[0];
 }
 
-var hasAttributeNS = actualHasAttributeNS;
-function toElement(str) {
-  if (!range && doc.createRange) {
+function createFragmentFromRange(str) {
+  if (!range) {
     range = doc.createRange();
     range.selectNode(doc.body);
   }
 
-  var fragment;
+  var fragment = range.createContextualFragment(str);
+  return fragment.childNodes[0];
+}
 
-  if (range && range.createContextualFragment) {
-    fragment = range.createContextualFragment(str);
-  } else {
-    fragment = doc.createElement('body');
-    fragment.innerHTML = str;
+function createFragmentFromWrap(str) {
+  var fragment = doc.createElement('body');
+  fragment.innerHTML = str;
+  return fragment.childNodes[0];
+}
+/**
+ * This is about the same
+ * var html = new DOMParser().parseFromString(str, 'text/html');
+ * return html.body.firstChild;
+ *
+ * @method toElement
+ * @param {String} str
+ */
+
+
+function toElement(str) {
+  str = str.trim();
+
+  if (HAS_TEMPLATE_SUPPORT) {
+    // avoid restrictions on content for things like `<tr><th>Hi</th></tr>` which
+    // createContextualFragment doesn't support
+    // <template> support not available in IE
+    return createFragmentFromTemplate(str);
+  } else if (HAS_RANGE_SUPPORT) {
+    return createFragmentFromRange(str);
   }
 
-  return fragment.childNodes[0];
+  return createFragmentFromWrap(str);
 }
 /**
  * Returns true if two node's names are the same.
@@ -2266,6 +4803,260 @@ function moveChildren(fromEl, toEl) {
 
 /***/ }),
 
+/***/ "./src/js/dom/polyfills.js":
+/*!*********************************!*\
+  !*** ./src/js/dom/polyfills.js ***!
+  \*********************************/
+/*! exports provided: ArrayFrom, ArrayIncludes, ElementGetAttributeNames, ArrayFlat */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ArrayFrom", function() { return ArrayFrom; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ArrayIncludes", function() { return ArrayIncludes; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ElementGetAttributeNames", function() { return ElementGetAttributeNames; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ArrayFlat", function() { return ArrayFlat; });
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from#Polyfill
+function ArrayFrom() {
+  if (!Array.from) {
+    Array.from = function () {
+      var toStr = Object.prototype.toString;
+
+      var isCallable = function isCallable(fn) {
+        return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+      };
+
+      var toInteger = function toInteger(value) {
+        var number = Number(value);
+
+        if (isNaN(number)) {
+          return 0;
+        }
+
+        if (number === 0 || !isFinite(number)) {
+          return number;
+        }
+
+        return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+      };
+
+      var maxSafeInteger = Math.pow(2, 53) - 1;
+
+      var toLength = function toLength(value) {
+        var len = toInteger(value);
+        return Math.min(Math.max(len, 0), maxSafeInteger);
+      }; // The length property of the from method is 1.
+
+
+      return function from(arrayLike
+      /*, mapFn, thisArg */
+      ) {
+        // 1. Let C be the this value.
+        var C = this; // 2. Let items be ToObject(arrayLike).
+
+        var items = Object(arrayLike); // 3. ReturnIfAbrupt(items).
+
+        if (arrayLike == null) {
+          throw new TypeError('Array.from requires an array-like object - not null or undefined');
+        } // 4. If mapfn is undefined, then let mapping be false.
+
+
+        var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+        var T;
+
+        if (typeof mapFn !== 'undefined') {
+          // 5. else
+          // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+          if (!isCallable(mapFn)) {
+            throw new TypeError('Array.from: when provided, the second argument must be a function');
+          } // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+
+
+          if (arguments.length > 2) {
+            T = arguments[2];
+          }
+        } // 10. Let lenValue be Get(items, "length").
+        // 11. Let len be ToLength(lenValue).
+
+
+        var len = toLength(items.length); // 13. If IsConstructor(C) is true, then
+        // 13. a. Let A be the result of calling the [[Construct]] internal method
+        // of C with an argument list containing the single item len.
+        // 14. a. Else, Let A be ArrayCreate(len).
+
+        var A = isCallable(C) ? Object(new C(len)) : new Array(len); // 16. Let k be 0.
+
+        var k = 0; // 17. Repeat, while k < len… (also steps a - h)
+
+        var kValue;
+
+        while (k < len) {
+          kValue = items[k];
+
+          if (mapFn) {
+            A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+          } else {
+            A[k] = kValue;
+          }
+
+          k += 1;
+        } // 18. Let putStatus be Put(A, "length", len, true).
+
+
+        A.length = len; // 20. Return A.
+
+        return A;
+      };
+    }();
+  }
+} // https://stackoverflow.com/questions/53308396/how-to-polyfill-array-prototype-includes-for-ie8
+
+function ArrayIncludes() {
+  if (!Array.prototype.includes) {
+    //or use Object.defineProperty
+    Array.prototype.includes = function (search) {
+      return !!~this.indexOf(search);
+    };
+  }
+} // https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNames#Polyfill
+
+function ElementGetAttributeNames() {
+  if (Element.prototype.getAttributeNames == undefined) {
+    Element.prototype.getAttributeNames = function () {
+      var attributes = this.attributes;
+      var length = attributes.length;
+      var result = new Array(length);
+
+      for (var i = 0; i < length; i++) {
+        result[i] = attributes[i].name;
+      }
+
+      return result;
+    };
+  }
+} // https://raw.githubusercontent.com/jonathantneal/array-flat-polyfill/master/src/polyfill-flat.js
+
+function ArrayFlat() {
+  if (!Array.prototype.flat) {
+    Object.defineProperty(Array.prototype, 'flat', {
+      configurable: true,
+      value: function flat() {
+        var depth = isNaN(arguments[0]) ? 1 : Number(arguments[0]);
+        return depth ? Array.prototype.reduce.call(this, function (acc, cur) {
+          if (Array.isArray(cur)) {
+            acc.push.apply(acc, flat.call(cur, depth - 1));
+          } else {
+            acc.push(cur);
+          }
+
+          return acc;
+        }, []) : Array.prototype.slice.call(this);
+      },
+      writable: true
+    });
+  }
+} // https://tc39.github.io/ecma262/#sec-array.prototype.find
+
+if (!Array.prototype.find) {
+  Object.defineProperty(Array.prototype, 'find', {
+    value: function value(predicate) {
+      // 1. Let O be ? ToObject(this value).
+      if (this == null) {
+        throw new TypeError('"this" is null or not defined');
+      }
+
+      var o = Object(this); // 2. Let len be ? ToLength(? Get(O, "length")).
+
+      var len = o.length >>> 0; // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+
+      if (typeof predicate !== 'function') {
+        throw new TypeError('predicate must be a function');
+      } // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+
+
+      var thisArg = arguments[1]; // 5. Let k be 0.
+
+      var k = 0; // 6. Repeat, while k < len
+
+      while (k < len) {
+        // a. Let Pk be ! ToString(k).
+        // b. Let kValue be ? Get(O, Pk).
+        // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+        // d. If testResult is true, return kValue.
+        var kValue = o[k];
+
+        if (predicate.call(thisArg, kValue, k, o)) {
+          return kValue;
+        } // e. Increase k by 1.
+
+
+        k++;
+      } // 7. Return undefined.
+
+
+      return undefined;
+    },
+    configurable: true,
+    writable: true
+  });
+}
+/**
+ * @see https://dom.spec.whatwg.org/#interface-element
+ * @see https://developer.mozilla.org/docs/Web/API/Element/matches#Polyfill
+ * @see https://gist.github.com/jonathantneal/3062955
+ * @see https://github.com/jonathantneal/closest
+ */
+
+
+(function (global) {
+  var Element;
+  var ElementPrototype;
+  var matches;
+
+  if (Element = global.Element) {
+    ElementPrototype = Element.prototype;
+    /**
+         * @see https://dom.spec.whatwg.org/#dom-element-matches
+         */
+
+    if (!(matches = ElementPrototype.matches)) {
+      if (matches = ElementPrototype.matchesSelector || ElementPrototype.mozMatchesSelector || ElementPrototype.msMatchesSelector || ElementPrototype.oMatchesSelector || ElementPrototype.webkitMatchesSelector || ElementPrototype.querySelectorAll && function matches(selectors) {
+        var element = this;
+        var nodeList = (element.parentNode || element.document || element.ownerDocument).querySelectorAll(selectors);
+        var index = nodeList.length;
+
+        while (--index >= 0 && nodeList.item(index) !== element) {}
+
+        return index > -1;
+      }) {
+        ElementPrototype.matches = matches;
+      }
+    }
+    /**
+         * @see https://dom.spec.whatwg.org/#dom-element-closest
+         */
+
+
+    if (!ElementPrototype.closest && matches) {
+      ElementPrototype.closest = function closest(selectors) {
+        var element = this;
+
+        while (element) {
+          if (element.nodeType === 1 && element.matches(selectors)) {
+            return element;
+          }
+
+          element = element.parentNode;
+        }
+
+        return null;
+      };
+    }
+  }
+})(Function('return this')());
+
+/***/ }),
+
 /***/ "./src/js/dom/prefix.js":
 /*!******************************!*\
   !*** ./src/js/dom/prefix.js ***!
@@ -2296,11 +5087,19 @@ module.exports = function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./store */ "./src/js/store.js");
-/* harmony import */ var _dom_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./dom/dom */ "./src/js/dom/dom.js");
-/* harmony import */ var _component__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./component */ "./src/js/component/index.js");
-/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./connection */ "./src/js/connection/index.js");
-/* harmony import */ var _connection_drivers__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./connection/drivers */ "./src/js/connection/drivers/index.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+/* harmony import */ var _dom_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/dom/dom */ "./src/js/dom/dom.js");
+/* harmony import */ var _Component_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/Component/index */ "./src/js/Component/index.js");
+/* harmony import */ var _connection__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/connection */ "./src/js/connection/index.js");
+/* harmony import */ var _connection_drivers__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/connection/drivers */ "./src/js/connection/drivers/index.js");
+/* harmony import */ var _dom_polyfills__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/dom/polyfills */ "./src/js/dom/polyfills.js");
+/* harmony import */ var whatwg_fetch__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! whatwg-fetch */ "./node_modules/whatwg-fetch/fetch.js");
+/* harmony import */ var promise_polyfill_src_polyfill__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! promise-polyfill/src/polyfill */ "./node_modules/promise-polyfill/src/polyfill.js");
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./util */ "./src/js/util/index.js");
+/* harmony import */ var _component_LoadingStates__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/component/LoadingStates */ "./src/js/component/LoadingStates.js");
+/* harmony import */ var _component_DirtyStates__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/component/DirtyStates */ "./src/js/component/DirtyStates.js");
+/* harmony import */ var _component_OfflineStates__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @/component/OfflineStates */ "./src/js/component/OfflineStates.js");
+/* harmony import */ var _component_Polling__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! @/component/Polling */ "./src/js/component/Polling.js");
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2315,27 +5114,60 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+
+
+
+
+
+
+
+
 var Livewire =
 /*#__PURE__*/
 function () {
   function Livewire() {
-    var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-      driver: 'http'
-    },
-        driver = _ref.driver;
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     _classCallCheck(this, Livewire);
 
-    if (_typeof(driver) !== 'object') {
-      driver = _connection_drivers__WEBPACK_IMPORTED_MODULE_4__["default"][driver];
-    }
-
+    var defaults = {
+      driver: 'http'
+    };
+    options = Object.assign({}, defaults, options);
+    var driver = _typeof(options.driver) === 'object' ? options.driver : _connection_drivers__WEBPACK_IMPORTED_MODULE_4__["default"][options.driver];
     this.connection = new _connection__WEBPACK_IMPORTED_MODULE_3__["default"](driver);
-    this.components = _store__WEBPACK_IMPORTED_MODULE_0__["default"];
-    this.start();
+    this.components = _Store__WEBPACK_IMPORTED_MODULE_0__["default"];
+
+    this.onLoadCallback = function () {};
+
+    this.activatePolyfills();
+    this.components.initializeGarbageCollection();
   }
 
   _createClass(Livewire, [{
+    key: "find",
+    value: function find(componentId) {
+      return this.components.componentsById[componentId];
+    }
+  }, {
+    key: "hook",
+    value: function hook(name, callback) {
+      this.components.registerHook(name, callback);
+    }
+  }, {
+    key: "onLoad",
+    value: function onLoad(callback) {
+      this.onLoadCallback = callback;
+    }
+  }, {
+    key: "activatePolyfills",
+    value: function activatePolyfills() {
+      Object(_dom_polyfills__WEBPACK_IMPORTED_MODULE_5__["ArrayFlat"])();
+      Object(_dom_polyfills__WEBPACK_IMPORTED_MODULE_5__["ArrayFrom"])();
+      Object(_dom_polyfills__WEBPACK_IMPORTED_MODULE_5__["ArrayIncludes"])();
+      Object(_dom_polyfills__WEBPACK_IMPORTED_MODULE_5__["ElementGetAttributeNames"])();
+    }
+  }, {
     key: "emit",
     value: function emit(event) {
       var _this$components;
@@ -2360,7 +5192,7 @@ function () {
   }, {
     key: "stop",
     value: function stop() {
-      this.components.wipeComponents();
+      this.components.tearDownComponents();
     }
   }, {
     key: "start",
@@ -2368,8 +5200,45 @@ function () {
       var _this = this;
 
       _dom_dom__WEBPACK_IMPORTED_MODULE_1__["default"].rootComponentElementsWithNoParents().forEach(function (el) {
-        _this.components.addComponent(new _component__WEBPACK_IMPORTED_MODULE_2__["default"](el, _this.connection));
+        _this.components.addComponent(new _Component_index__WEBPACK_IMPORTED_MODULE_2__["default"](el, _this.connection));
       });
+      this.onLoadCallback();
+      Object(_util__WEBPACK_IMPORTED_MODULE_8__["dispatch"])('livewire:load'); // This is very important for garbage collecting components
+      // on the backend.
+
+      window.addEventListener('beforeunload', function () {
+        _this.components.tearDownComponents();
+      });
+      document.addEventListener('visibilitychange', function () {
+        _this.components.livewireIsInBackground = document.hidden;
+      }, false);
+    }
+  }, {
+    key: "rescan",
+    value: function rescan() {
+      var _this2 = this;
+
+      _dom_dom__WEBPACK_IMPORTED_MODULE_1__["default"].rootComponentElementsWithNoParents().forEach(function (el) {
+        var componentId = el.getAttribute('id');
+        if (_this2.components.hasComponent(componentId)) return;
+
+        _this2.components.addComponent(new _Component_index__WEBPACK_IMPORTED_MODULE_2__["default"](el, _this2.connection));
+      });
+    }
+  }, {
+    key: "beforeDomUpdate",
+    value: function beforeDomUpdate(callback) {
+      this.components.beforeDomUpdate(callback);
+    }
+  }, {
+    key: "afterDomUpdate",
+    value: function afterDomUpdate(callback) {
+      this.components.afterDomUpdate(callback);
+    }
+  }, {
+    key: "plugin",
+    value: function plugin(callable) {
+      callable(this);
     }
   }]);
 
@@ -2380,89 +5249,12 @@ if (!window.Livewire) {
   window.Livewire = Livewire;
 }
 
+Object(_component_LoadingStates__WEBPACK_IMPORTED_MODULE_9__["default"])();
+Object(_component_DirtyStates__WEBPACK_IMPORTED_MODULE_10__["default"])();
+Object(_component_OfflineStates__WEBPACK_IMPORTED_MODULE_11__["default"])();
+Object(_component_Polling__WEBPACK_IMPORTED_MODULE_12__["default"])();
+Object(_util__WEBPACK_IMPORTED_MODULE_8__["dispatch"])('livewire:available');
 /* harmony default export */ __webpack_exports__["default"] = (Livewire);
-
-/***/ }),
-
-/***/ "./src/js/message.js":
-/*!***************************!*\
-  !*** ./src/js/message.js ***!
-  \***************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return _default; });
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var _default =
-/*#__PURE__*/
-function () {
-  function _default(component, actionQueue) {
-    _classCallCheck(this, _default);
-
-    this.component = component;
-    this.actionQueue = actionQueue;
-  }
-
-  _createClass(_default, [{
-    key: "prepareForSend",
-    value: function prepareForSend() {
-      this.loadingEls = this.component.setLoading(this.refs);
-    }
-  }, {
-    key: "payload",
-    value: function payload() {
-      return {
-        id: this.component.id,
-        data: this.component.data,
-        name: this.component.name,
-        children: this.component.children,
-        middleware: this.component.middleware,
-        checksum: this.component.checksum,
-        actionQueue: this.actionQueue.map(function (action) {
-          // This ensures only the type & payload properties only get sent over.
-          return {
-            type: action.type,
-            payload: action.payload
-          };
-        })
-      };
-    }
-  }, {
-    key: "storeResponse",
-    value: function storeResponse(payload) {
-      return this.response = {
-        id: payload.id,
-        dom: payload.dom,
-        children: payload.children,
-        dirtyInputs: payload.dirtyInputs,
-        eventQueue: payload.eventQueue,
-        listeningFor: payload.listeningFor,
-        data: payload.data,
-        redirectTo: payload.redirectTo
-      };
-    }
-  }, {
-    key: "refs",
-    get: function get() {
-      return this.actionQueue.map(function (action) {
-        return action.ref;
-      }).filter(function (ref) {
-        return ref;
-      });
-    }
-  }]);
-
-  return _default;
-}();
-
-
 
 /***/ }),
 
@@ -2475,11 +5267,19 @@ function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util */ "./src/js/util/index.js");
-/* harmony import */ var _action_model__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action/model */ "./src/js/action/model.js");
-/* harmony import */ var _action_method__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action/method */ "./src/js/action/method.js");
-/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./dom/dom_element */ "./src/js/dom/dom_element.js");
-/* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./store */ "./src/js/store.js");
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/util */ "./src/js/util/index.js");
+/* harmony import */ var _action_model__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/action/model */ "./src/js/action/model.js");
+/* harmony import */ var _action_method__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/action/method */ "./src/js/action/method.js");
+/* harmony import */ var _dom_dom_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/dom/dom_element */ "./src/js/dom/dom_element.js");
+/* harmony import */ var _Store__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/Store */ "./src/js/Store.js");
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
 
 
 
@@ -2489,16 +5289,10 @@ __webpack_require__.r(__webpack_exports__);
   initialize: function initialize(el, component) {
     var _this = this;
 
-    // Parse out "direcives", "modifiers", and "value" from livewire attributes.
     el.directives.all().forEach(function (directive) {
       switch (directive.type) {
-        case 'loading':
-          _this.registerElementForLoading(el, directive, component);
-
-          break;
-
-        case 'poll':
-          _this.fireActionOnInterval(el, directive, component);
+        case 'init':
+          _this.fireActionRightAway(el, directive, component);
 
           break;
 
@@ -2515,22 +5309,19 @@ __webpack_require__.r(__webpack_exports__);
           break;
       }
     });
+    _Store__WEBPACK_IMPORTED_MODULE_4__["default"].callHook('elementInitialized', el, component);
   },
-  registerElementForLoading: function registerElementForLoading(el, directive, component) {
-    var refName = el.directives.get('target') && el.directives.get('target').value;
-    component.addLoadingEl(el, directive.value, refName, directive.modifiers.includes('remove'));
-  },
-  fireActionOnInterval: function fireActionOnInterval(el, directive, component) {
-    var method = directive.method || '$refresh';
-    setInterval(function () {
-      component.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_2__["default"](method, directive.params, el));
-    }, directive.durationOr(500));
+  fireActionRightAway: function fireActionRightAway(el, directive, component) {
+    var method = directive.value ? directive.method : '$refresh';
+    component.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_2__["default"](method, directive.params, el));
   },
   attachModelListener: function attachModelListener(el, directive, component) {
+    // This is used by morphdom: morphdom.js:391
+    el.el.isLivewireModel = true;
     var isLazy = directive.modifiers.includes('lazy');
 
     var debounceIf = function debounceIf(condition, callback, time) {
-      return condition ? Object(_util__WEBPACK_IMPORTED_MODULE_0__["debounce"])(callback, time) : callback;
+      return condition ? component.modelSyncDebounce(callback, time) : callback;
     };
 
     var hasDebounceModifier = directive.modifiers.includes('debounce'); // If it's a Vue component, listen for Vue input event emission.
@@ -2542,18 +5333,25 @@ __webpack_require__.r(__webpack_exports__);
         component.addAction(new _action_model__WEBPACK_IMPORTED_MODULE_1__["default"](model, value, el));
       }, directive.durationOr(150)));
     } else {
-      // If it's a text input and not .lazy, debounce, otherwise fire immediately.
-      el.addEventListener(isLazy ? 'change' : 'input', debounceIf(hasDebounceModifier || el.isTextInput() && !isLazy, function (e) {
+      var defaultEventType = el.isTextInput() ? 'input' : 'change'; // If it's a text input and not .lazy, debounce, otherwise fire immediately.
+
+      var event = isLazy ? 'change' : defaultEventType;
+      var handler = debounceIf(hasDebounceModifier || el.isTextInput() && !isLazy, function (e) {
         var model = directive.value;
         var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_3__["default"](e.target);
-        var value = el.valueFromInput();
+        var value = el.valueFromInput(component);
         component.addAction(new _action_model__WEBPACK_IMPORTED_MODULE_1__["default"](model, value, el));
-      }, directive.durationOr(150)));
+      }, directive.durationOr(150));
+      el.addEventListener(event, handler);
+      component.addListenerForTeardown(function () {
+        el.removeEventListener(event, handler);
+      });
     }
   },
   attachDomListener: function attachDomListener(el, directive, component) {
     switch (directive.type) {
       case 'keydown':
+      case 'keyup':
         this.attachListener(el, directive, component, function (e) {
           // Only handle listener if no, or matching key modifiers are passed.
           return !(directive.modifiers.length === 0 || directive.modifiers.includes(Object(_util__WEBPACK_IMPORTED_MODULE_0__["kebabCase"])(e.key)));
@@ -2568,29 +5366,43 @@ __webpack_require__.r(__webpack_exports__);
   attachListener: function attachListener(el, directive, component, callback) {
     var _this2 = this;
 
-    el.addEventListener(directive.type, function (e) {
+    if (directive.modifiers.includes('prefetch')) {
+      el.addEventListener('mouseenter', function () {
+        component.addPrefetchAction(new _action_method__WEBPACK_IMPORTED_MODULE_2__["default"](directive.method, directive.params, el));
+      });
+    }
+
+    var event = directive.type;
+
+    var handler = function handler(e) {
       if (callback && callback(e) !== false) {
         return;
       }
 
-      var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_3__["default"](e.target); // This is outside the conditional below so "wire:click.prevent" without
-      // a value still prevents default.
+      component.callAfterModelDebounce(function () {
+        var el = new _dom_dom_element__WEBPACK_IMPORTED_MODULE_3__["default"](e.target);
+        directive.setEventContext(e); // This is outside the conditional below so "wire:click.prevent" without
+        // a value still prevents default.
 
-      _this2.preventAndStop(e, directive.modifiers); // Check for global event emission.
+        _this2.preventAndStop(e, directive.modifiers);
 
+        var method = directive.method;
+        var params = directive.params; // Check for global event emission.
 
-      if (directive.value.match(/\$emit\(.*\)/)) {
-        var tempStoreForEval = _store__WEBPACK_IMPORTED_MODULE_4__["default"];
-        eval(directive.value.replace(/\$emit\((.*)\)/, function (match, group1) {
-          return 'tempStoreForEval.emit(' + group1 + ')';
-        }));
-        return;
-      }
+        if (method === '$emit') {
+          _Store__WEBPACK_IMPORTED_MODULE_4__["default"].emit.apply(_Store__WEBPACK_IMPORTED_MODULE_4__["default"], _toConsumableArray(params));
+          return;
+        }
 
-      if (directive.value) {
-        directive.setEventContext(e);
-        component.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_2__["default"](directive.method, directive.params, el));
-      }
+        if (directive.value) {
+          component.addAction(new _action_method__WEBPACK_IMPORTED_MODULE_2__["default"](method, params, el));
+        }
+      });
+    };
+
+    el.addEventListener(event, handler);
+    component.addListenerForTeardown(function () {
+      el.removeEventListener(event, handler);
     });
   },
   preventAndStop: function preventAndStop(event, modifiers) {
@@ -2598,100 +5410,6 @@ __webpack_require__.r(__webpack_exports__);
     modifiers.includes('stop') && event.stopPropagation();
   }
 });
-
-/***/ }),
-
-/***/ "./src/js/store.js":
-/*!*************************!*\
-  !*** ./src/js/store.js ***!
-  \*************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _action_event__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action/event */ "./src/js/action/event.js");
-
-var store = {
-  componentsById: {},
-  listeners: {},
-  addComponent: function addComponent(component) {
-    return this.componentsById[component.id] = component;
-  },
-  findComponent: function findComponent(id) {
-    return this.componentsById[id];
-  },
-  wipeComponents: function wipeComponents() {
-    this.componentsById = {};
-  },
-  on: function on(event, callback) {
-    if (this.listeners[event] !== undefined) {
-      this.listeners[event].push(callback);
-    } else {
-      this.listeners[event] = [callback];
-    }
-  },
-  emit: function emit(event) {
-    var _this = this;
-
-    for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      params[_key - 1] = arguments[_key];
-    }
-
-    Object.keys(this.listeners).forEach(function (event) {
-      _this.listeners[event].forEach(function (callback) {
-        return callback.apply(void 0, params);
-      });
-    });
-    this.componentsListeningForEvent(event).forEach(function (component) {
-      return component.addAction(new _action_event__WEBPACK_IMPORTED_MODULE_0__["default"](event, params));
-    });
-  },
-  componentsListeningForEvent: function componentsListeningForEvent(event) {
-    var _this2 = this;
-
-    return Object.keys(this.componentsById).map(function (key) {
-      return _this2.componentsById[key];
-    }).filter(function (component) {
-      return component.events.includes(event);
-    });
-  }
-};
-/* harmony default export */ __webpack_exports__["default"] = (store);
-
-/***/ }),
-
-/***/ "./src/js/util/add_mixin.js":
-/*!**********************************!*\
-  !*** ./src/js/util/add_mixin.js ***!
-  \**********************************/
-/*! exports provided: addMixin */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addMixin", function() { return addMixin; });
-function addMixin(classTarget) {
-  for (var _len = arguments.length, sources = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    sources[_key - 1] = arguments[_key];
-  }
-
-  sources.forEach(function (source) {
-    var descriptors = Object.keys(source).reduce(function (descriptors, key) {
-      descriptors[key] = Object.getOwnPropertyDescriptor(source, key);
-      return descriptors;
-    }, {});
-    Object.getOwnPropertySymbols(source).forEach(function (sym) {
-      var descriptor = Object.getOwnPropertyDescriptor(source, sym);
-
-      if (descriptor.enumerable) {
-        descriptors[sym] = descriptor;
-      }
-    });
-    Object.defineProperties(classTarget.prototype, descriptors);
-  });
-  return classTarget.prototype;
-}
 
 /***/ }),
 
@@ -2821,7 +5539,7 @@ var preventDefaultSupported = function () {
 /*!******************************!*\
   !*** ./src/js/util/index.js ***!
   \******************************/
-/*! exports provided: debounceWithFiringOnBothEnds, debounce, walk, dispatch, addMixin, kebabCase, tap */
+/*! exports provided: kebabCase, tap, debounceWithFiringOnBothEnds, debounce, walk, dispatch */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2839,15 +5557,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _dispatch__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./dispatch */ "./src/js/util/dispatch.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "dispatch", function() { return _dispatch__WEBPACK_IMPORTED_MODULE_2__["dispatch"]; });
 
-/* harmony import */ var _add_mixin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./add_mixin */ "./src/js/util/add_mixin.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "addMixin", function() { return _add_mixin__WEBPACK_IMPORTED_MODULE_3__["addMixin"]; });
-
-
 
 
 
 function kebabCase(subject) {
-  return subject.split(/[_\s]/).join("-").toLowerCase();
+  return subject.replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[_\s]/, '-').toLowerCase();
 }
 function tap(output, callback) {
   callback(output);

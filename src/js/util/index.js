@@ -2,10 +2,9 @@
 export * from './debounce'
 export * from './walk'
 export * from './dispatch'
-export * from './add_mixin'
 
 export function kebabCase(subject) {
-    return subject.split(/[_\s]/).join("-").toLowerCase()
+    return subject.replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[_\s]/, '-').toLowerCase()
 }
 
 export function tap(output, callback) {
