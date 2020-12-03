@@ -4,6 +4,7 @@ namespace Livewire;
 
 use Exception;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Livewire\Testing\TestableLivewire;
 use Livewire\Connection\ComponentHydrator;
 
@@ -25,8 +26,9 @@ class LivewireManager
 
     public function getComponentClass($alias)
     {
-        $class = $this->componentAliases[$alias]
-            ?? app()->make(LivewireComponentsFinder::class)->find($alias);
+        $class = isset($this->componentAliases[$alias])
+            ? $this->componentAliases[$alias]
+            : app()->make(LivewireComponentsFinder::class)->find($alias);
 
         throw_unless($class, new Exception(
             "Unable to find component: [{$alias}]"
@@ -70,7 +72,7 @@ EOT;
         $instance = $this->activate($name);
         $instance->mount(...$options);
         $dom = $instance->output();
-        $id = str_random(20);
+        $id = Str::random(20);
         $properties = ComponentHydrator::dehydrate($instance);
         $events = $instance->getEventsBeingListenedFor();
         $children = $instance->getRenderedChildren();

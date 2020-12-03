@@ -31,9 +31,12 @@ class RouterMacros
                 $componentClass = app('livewire')->getComponentClass($component);
                 $reflected = new \ReflectionClass($componentClass);
 
+                $currentLayout = $this->current()->getAction('layout');
+                $currentSection = $this->current()->getAction('section');
+
                 return app('view')->file(__DIR__ . '/livewire-view.blade.php', [
-                    'layout' => $this->current()->getAction('layout') ?? 'layouts.app',
-                    'section' => $this->current()->getAction('section') ?? 'content',
+                    'layout' => isset($currentLayout) ? $currentLayout : 'layouts.app',
+                    'section' => isset($currentSection) ? $currentSection : 'content',
                     'component' => $component,
                     'componentOptions' => $reflected->hasMethod('mount')
                         ? (new PretendClassMethodIsControllerMethod($reflected->getMethod('mount'), $this))->retrieveBindings()

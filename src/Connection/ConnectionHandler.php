@@ -27,7 +27,7 @@ abstract class ConnectionHandler
             return ['redirectTo' => $instance->redirectTo];
         }
 
-        $dom = $instance->output($errors ?? null);
+        $dom = $instance->output(isset($errors) ? $errors : null);
         $data = ComponentHydrator::dehydrate($instance);
         $listeningFor = $instance->getEventsBeingListenedFor();
         $eventQueue = $instance->getEventQueue();

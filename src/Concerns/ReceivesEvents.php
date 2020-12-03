@@ -26,7 +26,7 @@ trait ReceivesEvents
         if (method_exists($this, 'listeners')) {
             return $this->listeners();
         }
-        return $this->listeners ?? [];
+        return isset($this->listeners) ? $this->listeners : [];
     }
 
     public function getEventsBeingListenedFor()

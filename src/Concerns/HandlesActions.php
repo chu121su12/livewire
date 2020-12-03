@@ -2,6 +2,7 @@
 
 namespace Livewire\Concerns;
 
+use Illuminate\Support\Str;
 use Livewire\Exceptions\NonPublicComponentMethodCall;
 
 trait HandlesActions
@@ -17,8 +18,8 @@ trait HandlesActions
 
     protected function callBeforeAndAferSyncHooks($name, $value, $callback)
     {
-        $beforeMethod = 'updating' . studly_case($name);
-        $afterMethod = 'updated' . studly_case($name);
+        $beforeMethod = 'updating' . Str::studly($name);
+        $afterMethod = 'updated' . Str::studly($name);
 
         if (method_exists($this, $beforeMethod)) {
             $this->{$beforeMethod}($value);

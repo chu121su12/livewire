@@ -27,6 +27,60 @@ class LivewireMakeCommandParserTest extends TestCase
 
     function classPathProvider()
     {
+        if (windows_os())
+        {
+            return [
+                [
+                    'foo',
+                    'foo',
+                    'App\Http\Livewire',
+                    '/Http\Livewire\Foo.php',
+                    'livewire.foo',
+                    '/livewire\foo.blade.php',
+                ],
+                [
+                    'foo.bar',
+                    'bar',
+                    'App\Http\Livewire\Foo',
+                    '/Http\Livewire\Foo\Bar.php',
+                    'livewire.foo.bar',
+                    '/livewire\foo\bar.blade.php',
+                ],
+                [
+                    'foo.bar',
+                    'bar',
+                    'App\Http\Livewire\Foo',
+                    '/Http\Livewire\Foo\Bar.php',
+                    'livewire.foo.bar',
+                    '/livewire\foo\bar.blade.php',
+                ],
+                [
+                    'foo.bar',
+                    'bar',
+                    'App\Http\Livewire\Foo',
+                    '/Http\Livewire\Foo\Bar.php',
+                    'livewire.foo.bar',
+                    '/livewire\foo\bar.blade.php',
+                ],
+                [
+                    'foo-bar',
+                    'foo-bar',
+                    'App\Http\Livewire',
+                    '/Http\Livewire\FooBar.php',
+                    'livewire.foo-bar',
+                    '/livewire\foo-bar.blade.php',
+                ],
+                [
+                    'foo-bar.foo-bar',
+                    'foo-bar',
+                    'App\Http\Livewire\FooBar',
+                    '/Http\Livewire\FooBar\FooBar.php',
+                    'livewire.foo-bar.foo-bar',
+                    '/livewire\foo-bar\foo-bar.blade.php',
+                ],
+            ];
+        }
+
         return [
             [
                 'foo',

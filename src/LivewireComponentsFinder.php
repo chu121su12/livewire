@@ -24,7 +24,9 @@ class LivewireComponentsFinder
 
     public function find($alias)
     {
-        return $this->getManifest()[$alias] ?? null;
+        $manifest = $this->getManifest();
+
+        return isset($manifest[$alias]) ? $manifest[$alias] : null;
     }
 
     public function getManifest()
