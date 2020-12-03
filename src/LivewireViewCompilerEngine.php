@@ -43,12 +43,15 @@ class LivewireViewCompilerEngine extends CompilerEngine
         // flush out any stray output that might get out before an error occurs or
         // an exception is thrown. This prevents any partial views from leaking.
         try {
-            \Closure::bind(function() use($__path, $__data) {
+            $closure = \Closure::bind(function() use($__path, $__data) {
                 extract($__data, EXTR_SKIP);
                 include $__path;
-            }, $this->livewireComponent ? $this->livewireComponent : $this)();
+            }, $this->livewireComponent ? $this->livewireComponent : $this);
+            $closure();
         } catch (Exception $e) {
             $this->handleViewException($e, $obLevel);
+        } catch (\Error $e) {
+            $this->handleViewException(new FatalThrowableError($e), $obLevel);
         } catch (Throwable $e) {
             $this->handleViewException(new FatalThrowableError($e), $obLevel);
         }

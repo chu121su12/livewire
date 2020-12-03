@@ -130,24 +130,7 @@ abstract class Component
             return $value;
         }
 
-        if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-            $normalizedData = [];
-
-            foreach ($data as $key => $value) {
-                if (is_numeric($key)) {
-                    $normalizedData[$key] = $value;
-                }
-            }
-
-            ksort($normalizedData);
-
-            foreach ($data as $key => $value) {
-                if (! is_numeric($key)) {
-                    $normalizedData[$key] = $value;
-                }
-            }
-
-        } else {
+        if (! version_compare(PHP_VERSION, '7.0.0', '<')) {
 
         $normalizedData = $data;
 
@@ -164,6 +147,23 @@ abstract class Component
                 ? $a > $b
                 : 0;
         });
+
+        } else {
+            $normalizedData = [];
+
+            foreach ($data as $key => $value) {
+                if (is_numeric($key)) {
+                    $normalizedData[$key] = $value;
+                }
+            }
+
+            ksort($normalizedData);
+
+            foreach ($data as $key => $value) {
+                if (! is_numeric($key)) {
+                    $normalizedData[$key] = $value;
+                }
+            }
 
         }
 

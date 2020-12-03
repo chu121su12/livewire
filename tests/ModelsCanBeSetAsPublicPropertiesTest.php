@@ -11,7 +11,7 @@ use Livewire\Livewire;
 
 class ModelsCanBeSetAsPublicPropertiesTest extends TestCase
 {
-    public function setUp(): void
+    public function setUp()
     {
         parent::setUp();
 

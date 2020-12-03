@@ -14,7 +14,7 @@ trait ValidatesInput
 
     public function getErrorBag()
     {
-        return $this->errorBag ?? new MessageBag;
+        return isset($this->errorBag) ? $this->errorBag : new MessageBag;
     }
 
     public function addError($name, $message)

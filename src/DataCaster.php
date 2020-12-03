@@ -15,7 +15,7 @@ class DataCaster
 
     public function castTo($rawType, $value)
     {
-        [$type, $extras] = $this->parseTypeAndExtras($rawType);
+        list($type, $extras) = $this->parseTypeAndExtras($rawType);
 
         $this->ensureTypeExists($type);
 
@@ -24,7 +24,7 @@ class DataCaster
 
     public function castFrom($rawType, $value)
     {
-        [$type, $extras] = $this->parseTypeAndExtras($rawType);
+        list($type, $extras) = $this->parseTypeAndExtras($rawType);
 
         $this->ensureTypeExists($type);
 

@@ -27,6 +27,6 @@ class InterceptRedirects implements HydrationMiddleware
     {
         app()->instance('redirect', static::$redirectorCache);
 
-        $response->redirectTo = $instance->redirectTo ?? false;
+        $response->redirectTo = isset($instance->redirectTo) ? $instance->redirectTo : false;
     }
 }

@@ -11,7 +11,9 @@ class IncludeIdAsRootTagAttribute implements HydrationMiddleware
 
     public static function dehydrate($instance, $response)
     {
-        $response->dom = (new AddAttributesToRootTagOfHtml)($response->dom, [
+        $callable = new AddAttributesToRootTagOfHtml;
+
+        $response->dom = $callable($response->dom, [
             'id' => $instance->id,
         ]);
     }

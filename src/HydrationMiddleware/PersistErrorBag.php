@@ -7,7 +7,7 @@ class PersistErrorBag implements HydrationMiddleware
     public static function hydrate($unHydratedInstance, $request)
     {
         $unHydratedInstance->setErrorBag(
-            $request['errorBag'] ?? []
+            isset($request['errorBag']) ? $request['errorBag'] : []
         );
     }
 

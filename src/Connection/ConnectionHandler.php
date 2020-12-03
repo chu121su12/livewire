@@ -26,7 +26,7 @@ abstract class ConnectionHandler
             $errors = $e->validator->errors();
         }
 
-        $dom = $instance->output($errors ?? null);
+        $dom = $instance->output(isset($errors) ? $errors : null);
 
         $response = new Fluent([
             'id' => $payload['id'],

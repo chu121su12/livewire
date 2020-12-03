@@ -17,38 +17,34 @@ use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Testing\TestResponse as Laravel7TestResponse;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
-use Livewire\Commands\{
-    CpCommand,
-    MvCommand,
-    RmCommand,
-    CopyCommand,
-    MakeCommand,
-    MoveCommand,
-    StubCommand,
-    TouchCommand,
-    DeleteCommand,
-    ComponentParser,
-    DiscoverCommand,
-    MakeLivewireCommand
-};
-use Livewire\HydrationMiddleware\{
-    ForwardPrefetch,
-    PersistErrorBag,
-    UpdateQueryString,
-    InterceptRedirects,
-    CastPublicProperties,
-    RegisterEmittedEvents,
-    HydratePublicProperties,
-    SecureHydrationWithChecksum,
-    IncludeIdAsRootTagAttribute,
-    RegisterEventsBeingListenedFor,
-    HashPropertiesForDirtyDetection,
-    HydratePreviouslyRenderedChildren,
-    ClearFlashMessagesIfNotRedirectingAway,
-    PrioritizeDataUpdatesBeforeActionCalls,
-    HydrateEloquentModelsAsPublicProperties,
-    PerformPublicPropertyFromDataBindingUpdates
-};
+use Livewire\Commands\CpCommand;
+use Livewire\Commands\MvCommand;
+use Livewire\Commands\RmCommand;
+use Livewire\Commands\CopyCommand;
+use Livewire\Commands\MakeCommand;
+use Livewire\Commands\MoveCommand;
+use Livewire\Commands\StubCommand;
+use Livewire\Commands\TouchCommand;
+use Livewire\Commands\DeleteCommand;
+use Livewire\Commands\ComponentParser;
+use Livewire\Commands\DiscoverCommand;
+use Livewire\Commands\MakeLivewireCommand;
+use Livewire\HydrationMiddleware\ForwardPrefetch;
+use Livewire\HydrationMiddleware\PersistErrorBag;
+use Livewire\HydrationMiddleware\UpdateQueryString;
+use Livewire\HydrationMiddleware\InterceptRedirects;
+use Livewire\HydrationMiddleware\CastPublicProperties;
+use Livewire\HydrationMiddleware\RegisterEmittedEvents;
+use Livewire\HydrationMiddleware\HydratePublicProperties;
+use Livewire\HydrationMiddleware\SecureHydrationWithChecksum;
+use Livewire\HydrationMiddleware\IncludeIdAsRootTagAttribute;
+use Livewire\HydrationMiddleware\RegisterEventsBeingListenedFor;
+use Livewire\HydrationMiddleware\HashPropertiesForDirtyDetection;
+use Livewire\HydrationMiddleware\HydratePreviouslyRenderedChildren;
+use Livewire\HydrationMiddleware\ClearFlashMessagesIfNotRedirectingAway;
+use Livewire\HydrationMiddleware\PrioritizeDataUpdatesBeforeActionCalls;
+use Livewire\HydrationMiddleware\HydrateEloquentModelsAsPublicProperties;
+use Livewire\HydrationMiddleware\PerformPublicPropertyFromDataBindingUpdates;
 
 class LivewireBladeCompiler extends CompilerEngine {
                 protected function handleViewException($e, $obLevel)

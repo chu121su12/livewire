@@ -120,7 +120,9 @@ class LivewireManager
 
         $this->initialDehydrate($instance, $response);
 
-        $response->dom = (new AddAttributesToRootTagOfHtml)($response->dom, [
+        $callable = new AddAttributesToRootTagOfHtml;
+
+        $response->dom = $callable($response->dom, [
             'initial-data' => array_diff_key($response->toArray(), array_flip(['dom'])),
         ]);
 
@@ -245,7 +247,7 @@ HTML;
             $publishedManifest = json_decode(file_get_contents(public_path('vendor/livewire/manifest.json')), true);
             $versionedFileName = $publishedManifest['/livewire.js'];
 
-            $isHostedOnVapor = ($_ENV['SERVER_SOFTWARE'] ?? null) === 'vapor';
+            $isHostedOnVapor = (isset($_ENV['SERVER_SOFTWARE']) ? $_ENV['SERVER_SOFTWARE'] : null) === 'vapor';
 
             $fullAssetPath = ($isHostedOnVapor ? config('app.asset_url') : $appUrl).'/vendor/livewire'.$versionedFileName;
 
@@ -360,20 +362,20 @@ HTML;
 
     public function dispatch($event, ...$params)
     {
-        foreach ($this->listeners[$event] ?? [] as $listener) {
+        foreach (isset($this->listeners[$event]) ? $this->listeners[$event] : [] as $listener) {
             $listener(...$params);
         }
     }
 
     public function listen($event, $callback)
     {
-        $this->listeners[$event] ?? $this->listeners[$event] = [];
+        isset($this->listeners[$event]) ? $this->listeners[$event] : ($this->listeners[$event] = []);
 
         $this->listeners[$event][] = $callback;
     }
 
     public function isOnVapor()
     {
-        return ($_ENV['SERVER_SOFTWARE'] ?? null) === 'vapor';
+        return (isset($_ENV['SERVER_SOFTWARE']) ? $_ENV['SERVER_SOFTWARE'] : null) === 'vapor';
     }
 }
