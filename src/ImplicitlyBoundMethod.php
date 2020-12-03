@@ -22,8 +22,10 @@ class ImplicitlyBoundMethod extends BoundMethod
         return array_merge($dependencies, $parameters);
     }
 
-    protected static function substituteNameBindingForCallParameter($parameter, array &$parameters, int &$paramIndex)
+    protected static function substituteNameBindingForCallParameter($parameter, array &$parameters, &$paramIndex)
     {
+        $paramIndex = cast_to_int($paramIndex);
+
         // check if we have a candidate for name/value binding
         if (! array_key_exists($paramIndex, $parameters)) {
             return;
@@ -101,6 +103,12 @@ class ImplicitlyBoundMethod extends BoundMethod
 
     public static function getParameterClassName($parameter)
     {
+        if (\version_compare(\PHP_VERSION, '7.9', '<=')) {
+            $class = backport_reflection_parameter_get_class($parameter);
+
+            return ($class && ! $class->isInternal()) ? $class->getName() : null;
+        }
+
         $type = $parameter->getType();
 
         return ($type && ! $type->isBuiltin()) ? $type->getName() : null;

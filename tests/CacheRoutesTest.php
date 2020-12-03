@@ -13,6 +13,8 @@ class CacheRoutesTest extends TestCase
     {
         $routesWithClosure = collect(RouteFacade::getRoutes())->filter(function (Route $route) {
             return $route->getAction('uses') instanceof Closure;
+        })->reject(function (Route $route) {
+            return $route->uri === 'livewire-dusk/{}';
         });
 
         $this->assertTrue($routesWithClosure->isEmpty());

@@ -11,7 +11,7 @@ use Livewire\Exceptions\CannotBindToModelDataWithoutValidationRuleException;
 
 class ModelAttributesCanBeBoundDirectlyTest extends TestCase
 {
-    public function setUp(): void
+    public function setUp()
     {
         parent::setUp();
 

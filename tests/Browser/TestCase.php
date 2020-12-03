@@ -9,9 +9,17 @@ use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Assert as PHPUnit;
 
+if (! class_exists('Orchestra\Testbench\Dusk\TestCase')) {
+    class TestCase { }
+
+    return;
+}
+
 class TestCase extends BaseTestCase
 {
-    public function setUp(): void
+    public function __duskable__() { }
+
+    public function setUp()
     {
         \Orchestra\Testbench\Dusk\Options::withUI();
 
@@ -40,7 +48,7 @@ class TestCase extends BaseTestCase
         });
     }
 
-    protected function tearDown(): void
+    protected function tearDown()
     {
         $this->removeApplicationTweaks();
 
