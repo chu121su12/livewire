@@ -38,7 +38,7 @@ class RouterMacros
                     'layout' => isset($currentLayout) ? $currentLayout : 'layouts.app',
                     'section' => isset($currentSection) ? $currentSection : 'content',
                     'component' => $component,
-                    'componentOptions' => $reflected->hasMethod('mount')
+                    'componentParameters' => $reflected->hasMethod('mount')
                         ? (new PretendClassMethodIsControllerMethod($reflected->getMethod('mount'), $this))->retrieveBindings()
                         : [],
                 ]);

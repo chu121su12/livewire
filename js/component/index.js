@@ -244,24 +244,20 @@ export default class Component {
 
             getNodeKey: node => {
                 // This allows the tracking of elements by the "key" attribute, like in VueJs.
-                return node.hasAttribute(`${DOM.prefix}:key`)
-                    ? node.getAttribute(`${DOM.prefix}:key`)
+                return node.hasAttribute(`wire:key`)
+                    ? node.getAttribute(`wire:key`)
                     // If no "key", then first check for "wire:id", then "wire:model", then "id"
-                    : (node.hasAttribute(`${DOM.prefix}:id`)
-                        ? node.getAttribute(`${DOM.prefix}:id`)
+                    : (node.hasAttribute(`wire:id`)
+                        ? node.getAttribute(`wire:id`)
                         : node.id)
             },
 
             onBeforeNodeAdded: node => {
-                return (new DOMElement(node)).transitionElementIn()
+                //
             },
 
             onBeforeNodeDiscarded: node => {
-                const el = new DOMElement(node)
-
-                return el.transitionElementOut(nodeDiscarded => {
-                    store.callHook('elementRemoved', el, this)
-                })
+                //
             },
 
             onNodeDiscarded: node => {
@@ -302,6 +298,13 @@ export default class Component {
 
                 // Children will update themselves.
                 if (fromEl.isComponentRootEl() && fromEl.getAttribute('id') !== this.id) return false
+
+                // If the element we are updating is an Alpine component...
+                if (from.__x) {
+                    // Then temporarily clone it (with it's data) to the "to" element.
+                    // This should simulate backend Livewire being aware of Alpine changes.
+                    window.Alpine.clone(from.__x, to)
+                }
             },
 
             onElUpdated: (node) => {
