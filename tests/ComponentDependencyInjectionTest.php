@@ -134,14 +134,16 @@ class ComponentWithDependencyInjection extends Component
         $this->foo = $params;
     }
 
-    public function primitive(int $foo)
+    public function primitive($foo)
     {
+        $foo = cast_to_int($foo);
+
         $this->foo = $foo;
     }
 
-    public function primitiveWithDefault(?int $foo = 1, $bar = 'default')
+    public function primitiveWithDefault($foo = 1, $bar = 'default')
     {
-        $foo = cast_to_int($foo);
+        $foo = cast_to_int($foo, null);
 
         $this->foo = $foo;
         $this->bar = $bar;
@@ -155,8 +157,10 @@ class ComponentWithDependencyInjection extends Component
         $this->bar = $id;
     }
 
-    public function mixedWithDefault(UrlGenerator $generator, ?int $id = 1)
+    public function mixedWithDefault(UrlGenerator $generator, $id = 1)
     {
+        $id = cast_to_int($id, null);
+
         $this->foo = $generator->to('/some-url');
         $this->bar = $id;
     }
