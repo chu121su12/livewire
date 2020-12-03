@@ -86,7 +86,7 @@ class SupportBrowserHistory
         // If the component is setting $queryString params.
         if (! $this->getQueryParamsFromComponentProperties($component)->isEmpty()) return true;
 
-        $route = $route ?? app('router')->current();
+        $route = isset($route) ? $route : app('router')->current();
 
         if (
             $route

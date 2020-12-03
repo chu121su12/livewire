@@ -213,7 +213,12 @@ class TestableLivewire
 
                 try {
                     $value = $this->instance()->{$root};
+                } catch (\Exception $e) {
+                } catch (\Error $e) {
                 } catch (\Throwable $e) {
+                }
+
+                if (isset($e)) {
                     if ($e instanceof PropertyNotFoundException) {
                         $value = null;
                     } else if (Str::of($e->getMessage())->contains('must not be accessed before initialization')) {

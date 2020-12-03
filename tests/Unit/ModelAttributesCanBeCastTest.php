@@ -384,20 +384,22 @@ class QuizAnswer
 {
     protected $answer;
 
-    public static function make(string $answer): self
+    public static function make($answer) /// self
     {
+        $answer = cast_to_string($answer);
+
         $new = new static();
         $new->answer = $answer;
 
         return $new;
     }
 
-    public function getAnswer(): string
+    public function getAnswer() //// string
     {
         return $this->answer;
     }
 
-    public function matches($givenAnswer): bool
+    public function matches($givenAnswer) //// bool
     {
         return $this->answer === $givenAnswer;
     }
@@ -410,13 +412,17 @@ class QuizAnswer
 
 class QuizAnswerCaster implements CastsAttributes
 {
-    public function get($model, string $key, $value, array $attributes)
+    public function get($model, $key, $value, array $attributes)
     {
+        $key = cast_to_string($key);
+
         return QuizAnswer::make((string) $value);
     }
 
-    public function set($model, string $key, $value, array $attributes)
+    public function set($model, $key, $value, array $attributes)
     {
+        $key = cast_to_string($key);
+
         if ($value instanceof QuizAnswer) {
             $value = $value->getAnswer();
         }
@@ -458,8 +464,10 @@ class ComponentForModelAttributeCasting extends Component
         $this->model = ModelForAttributeCasting::first();
     }
 
-    public function validateAttribute(string $attribute)
+    public function validateAttribute($attribute)
     {
+        $attribute = cast_to_string($attribute);
+
         $this->validateOnly($attribute);
     }
 
