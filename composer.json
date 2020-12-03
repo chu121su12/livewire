@@ -15,6 +15,7 @@
         }
     ],
     "require": {
+        "php": ">=5.6.40",
         "cboden/ratchet": "^0.4.1",
         "symfony/dom-crawler": "^3.4",
         "opis/closure": "^3.1",
@@ -37,12 +38,23 @@
         }
     },
     "autoload-dev": {
+        "exclude-from-classmap": [
+            "vendor/phpunit/phpunit/src/ForwardCompatibility/TestCase.php",
+            "vendor/symfony/polyfill/src/Php80",
+            "vendor/symfony/http-kernel/Exception"
+        ],
+        "files": [
+            "vendor/laravel/framework/cr/helpers/tests.php"
+        ],
         "psr-4": {
+            "Orchestra\\Testbench\\": "vendor/laravel/framework/cr/patch/orchestra-testbench-core/testbench-core/src/",
+            "PHPUnit\\": "vendor/laravel/framework/cr/patch/phpunit-src/PHPUnit/",
+            "App\\": "vendor/orchestra/testbench-core/laravel/app",
             "Tests\\": "tests/"
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^7.5",
-        "laravel/framework": "^5.7"
+        "laravel/framework": "dev-merge",
+        "phpunit/phpunit": "^5.7"
     }
 }
