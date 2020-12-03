@@ -8,7 +8,7 @@ abstract class ConnectionHandler
 {
     public function handle($payload)
     {
-        $event = $payload['event'] ?? 'init';
+        $event = isset($payload['event']) ? $payload['event'] : 'init';
         $serialized = $payload['serialized'];
         $component = $payload['component'];
         $payload = $payload['payload'];
@@ -41,7 +41,7 @@ abstract class ConnectionHandler
             $errors = $e->validator->errors();
         }
 
-        $dom = $instance->dom($component, $errors ?? null);
+        $dom = $instance->dom($component, isset($errors) ? $errors : null);
         $dirtyInputs = $instance->dirtyInputs();
 
         $instance->afterAction();

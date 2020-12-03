@@ -12,7 +12,9 @@ class ComponentRootHasIdAttributeTest extends TestCase
 {
     public function setUp()
     {
-        ($this->livewire = app(LivewireManager::class))->register('dummy', Dummy::class);
+        $this->livewire = app(LivewireManager::class);
+
+        $this->livewire->register('dummy', Dummy::class);
 
         parent::setUp();
     }
