@@ -33,11 +33,21 @@
         <span dusk="bob.output" x-text="count"></span>
     </div>
 
-    <div x-data="{ count: @entangle('count') }">
+    <!-- Concatonating inside @@entangle to make sure full PHP expressions work. -->
+    <div x-data="{ count: @entangle('co' . 'unt') }">
         <button wire:click="$set('count', 100)" dusk="lob.reset">Reset</button>
         <button type="button" dusk="lob.increment" x-on:click="count++"></button>
         <button type="button" dusk="lob.decrement" x-on:click="$wire.count--"></button>
 
         <span dusk="lob.output" x-text="$wire.count"></span>
+    </div>
+
+    <div x-data="{ count: @entangle('nested.count') }">
+        <button wire:click="incrementNestedCount" dusk="law.increment.livewire">Livewire +</button>
+        <button type="button" dusk="law.increment.alpine" x-on:click="count++">Alpine +</button>
+
+        <span dusk="law.output.alpine" x-text="count"></span>
+        <span dusk="law.output.wire" x-text="$wire.nested.count"></span>
+        <span dusk="law.output.blade">{{ $nested['count'] }}"</span>
     </div>
 </div>

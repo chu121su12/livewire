@@ -13,7 +13,11 @@ trait MakesAssertions
 {
     public function assertSet($name, $value)
     {
-        PHPUnit::assertEquals($value, $this->get($name));
+        if (is_callable($value)) {
+            PHPUnit::assertTrue($value($this->get($name)));
+        } else {
+            PHPUnit::assertEquals($value, $this->get($name));
+        }
 
         return $this;
     }
@@ -21,6 +25,28 @@ trait MakesAssertions
     public function assertNotSet($name, $value)
     {
         PHPUnit::assertNotEquals($value, $this->get($name));
+
+        return $this;
+    }
+
+    public function assertPayloadSet($name, $value)
+    {
+        if (is_callable($value)) {
+            PHPUnit::assertTrue($value(data_get($this->payload['serverMemo']['data'], $name)));
+        } else {
+            PHPUnit::assertEquals($value, data_get($this->payload['serverMemo']['data'], $name));
+        }
+
+        return $this;
+    }
+
+    public function assertPayloadNotSet($name, $value)
+    {
+        if (is_callable($value)) {
+            PHPUnit::assertFalse($value(data_get($this->payload['serverMemo']['data'], $name)));
+        } else {
+            PHPUnit::assertNotEquals($value, data_get($this->payload['serverMemo']['data'], $name));
+        }
 
         return $this;
     }
@@ -69,7 +95,7 @@ trait MakesAssertions
     {
         PHPUnit::assertThat(
             $values,
-            new SeeInOrder($this->stripOutInitialData($this->payload['dom']))
+            new SeeInOrder($this->stripOutInitialData($this->lastRenderedDom))
         );
 
         return $this;
@@ -79,7 +105,7 @@ trait MakesAssertions
     {
         PHPUnit::assertThat(
             array_map('e', ($values)),
-            new SeeInOrder($this->stripOutInitialData($this->payload['dom']))
+            new SeeInOrder($this->stripOutInitialData($this->lastRenderedDom))
         );
 
         return $this;

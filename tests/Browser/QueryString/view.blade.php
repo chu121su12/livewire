@@ -7,7 +7,10 @@
 
     <button wire:click="$set('showNestedComponent', true)" dusk="show-nested">Show Nested Component</button>
 
+    <button wire:click="modifyBob" dusk="bob.modify">Modify Bob (Array Property)</button>
+    <span dusk="bob.output">@json($bob)</span>
+
     @if ($showNestedComponent)
-        @livewire(\Tests\Browser\PushState\NestedComponent::class)
+        @livewire(\Tests\Browser\QueryString\NestedComponent::class)
     @endif
 </div>

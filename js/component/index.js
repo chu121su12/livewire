@@ -1,4 +1,5 @@
 import Message from '@/Message'
+import dataGet from 'get-value'
 import PrefetchMessage from '@/PrefetchMessage'
 import { dispatch, debounce, wireDirectives, walk } from '@/util'
 import morphdom from '@/dom/morphdom'
@@ -17,6 +18,8 @@ export default class Component {
         el.__livewire = this
 
         this.el = el
+
+        this.lastFreshHtml = this.el.outerHTML
 
         this.id = this.el.getAttribute('wire:id')
 
@@ -57,6 +60,10 @@ export default class Component {
         return this.serverMemo.data
     }
 
+    get childIds() {
+        return Object.values(this.serverMemo.children).map(child => child.id)
+    }
+
     initialize() {
         this.walk(
             // Will run for every node in the component tree (not child component nodes).
@@ -87,9 +94,21 @@ export default class Component {
 
                     // Because Livewire (for payload reduction purposes) only returns the data that has changed,
                     // we can use all the data keys from the response as watcher triggers.
-                    let watchers = this.watchers[dataKey] || []
+                    Object.entries(this.watchers).forEach(([key, watchers]) => {
+                        let originalSplitKey = key.split('.')
+                        let basePropertyName = originalSplitKey.shift()
+                        let restOfPropertyName = originalSplitKey.join('.')
 
-                    watchers.forEach(watcher => watcher(dataValue))
+                        if (basePropertyName == dataKey) {
+                            // If the key deals with nested data, use the "get" function to get
+                            // the most nested data. Otherwise, return the entire data chunk.
+                            let potentiallyNestedValue = !! restOfPropertyName
+                                ? dataGet(dataValue, restOfPropertyName)
+                                : dataValue
+
+                            watchers.forEach(watcher => watcher(potentiallyNestedValue))
+                        }
+                    })
                 })
             } else {
                 // Every other key, we can just overwrite.
@@ -243,7 +262,14 @@ export default class Component {
         }
 
         if (response.effects.html) {
+            // If we get HTML from the server, store it for the next time we might not.
+            this.lastFreshHtml = response.effects.html
+
             this.handleMorph(response.effects.html.trim())
+        } else {
+            // It's important to still "morphdom" even when the server HTML hasn't changed,
+            // because Alpine needs to be given the chance to update.
+            this.handleMorph(this.lastFreshHtml)
         }
 
         if (response.effects.dirty) {
@@ -293,7 +319,11 @@ export default class Component {
     }
 
     redirect(url) {
-        window.location.href = url
+        if (window.Turbolinks && window.Turbolinks.supported) {
+            window.Turbolinks.visit(url)
+        } else {
+            window.location.href = url
+        }
     }
 
     forceRefreshDataBoundElementsMarkedAsDirty(dirtyInputs) {
