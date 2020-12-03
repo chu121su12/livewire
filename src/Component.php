@@ -8,6 +8,7 @@ use BadMethodCallException;
 use Illuminate\Support\Str;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Support\Traits\Macroable;
+use Livewire\Exceptions\CannotUseReservedLivewireComponentProperties;
 
 abstract class Component
 {
@@ -30,7 +31,17 @@ abstract class Component
     {
         $this->id = $id;
 
+        $this->ensureIdPropertyIsntOverridden();
+
         $this->initializeTraits();
+    }
+
+    protected function ensureIdPropertyIsntOverridden()
+    {
+        throw_if(
+            in_array('id', array_keys($this->getPublicPropertiesDefinedBySubClass())),
+            new CannotUseReservedLivewireComponentProperties('id', $this->getName())
+        );
     }
 
     protected function initializeTraits()
@@ -86,6 +97,10 @@ abstract class Component
 
         $view = $this->render();
 
+        if (is_string($view) && Livewire::isLaravel7()) {
+            $view = app('view')->make((new CreateBladeViewFromString)($view));
+        }
+
         $this->normalizePublicPropertiesForJavaScript();
 
         throw_unless($view instanceof View,
@@ -95,10 +110,14 @@ abstract class Component
             $errorBag = $errors ?: ($view->errors ?: $this->getErrorBag())
         );
 
+        $errors = (new ViewErrorBag)->put('default', $errorBag);
+
         $view->with([
-            'errors' => (new ViewErrorBag)->put('default', $errorBag),
+            'errors' => $errors,
             '_instance' => $this,
         ] + $this->getPublicPropertiesDefinedBySubClass());
+
+        session()->flash('errors', $errors);
 
         $output = $view->render();
 
@@ -176,7 +195,7 @@ abstract class Component
             }
         }
 
-        throw new \Exception("Property [{$property}] does not exist on the Component instance.");
+        throw new \Exception("Property [{$property}] does not exist on the {$this->getName()} component.");
     }
 
     public function __call($method, $params)

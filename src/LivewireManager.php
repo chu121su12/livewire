@@ -2,12 +2,13 @@
 
 namespace Livewire;
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Fluent;
-use Livewire\Testing\TestableLivewire;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Fluent;
+use Illuminate\Support\Str;
 use Livewire\Exceptions\ComponentNotFoundException;
 use Livewire\HydrationMiddleware\AddAttributesToRootTagOfHtml;
+use Livewire\Testing\TestableLivewire;
 
 class LivewireManager
 {
@@ -244,22 +245,22 @@ HTML;
 
     document.addEventListener("DOMContentLoaded", function() {
         window.livewire.start();
-    })
+    });
 
-    var firstTime = true
+    var firstTime = true;
     document.addEventListener("turbolinks:load", function() {
-        // We only want this handler to run AFTER the first load.
+        /* We only want this handler to run AFTER the first load. */
         if  (firstTime) {
-            firstTime = false
-            return
+            firstTime = false;
+            return;
         }
 
-        window.livewire.restart()
-    })
+        window.livewire.restart();
+    });
 
     document.addEventListener("turbolinks:before-cache", function() {
         document.querySelectorAll(`[wire\\\:id]`).forEach(el => {
-            const component = el.__livewire
+            const component = el.__livewire;
 
             const dataObject = {
                 data: component.data,
@@ -269,11 +270,11 @@ HTML;
                 name: component.name,
                 errorBag: component.errorBag,
                 redirectTo: component.redirectTo,
-            }
+            };
 
-            el.setAttribute('wire:initial-data', JSON.stringify(dataObject))
-        })
-    })
+            el.setAttribute('wire:initial-data', JSON.stringify(dataObject));
+        });
+    });
 </script>
 HTML;
     }
@@ -361,5 +362,10 @@ HTML;
     public function isOnVapor()
     {
         return (isset($_ENV['SERVER_SOFTWARE']) ? $_ENV['SERVER_SOFTWARE'] : null) === 'vapor';
+    }
+
+    public function isLaravel7()
+    {
+        return Application::VERSION === '7.x-dev' || version_compare(Application::VERSION, '7.0', '>=');
     }
 }

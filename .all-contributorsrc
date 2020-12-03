@@ -431,7 +431,8 @@
       "profile": "https://github.com/nuernbergerA",
       "contributions": [
         "maintenance",
-        "code"
+        "code",
+        "test"
       ]
     },
     {
@@ -441,6 +442,43 @@
       "profile": "https://stefanbauer.me",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "beganovich",
+      "name": "Benjamin Beganović",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/13711415?v=4",
+      "profile": "https://beganovich.github.io",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ruudschuurmans",
+      "name": "Ruud Schuurmans",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/12184008?v=4",
+      "profile": "http://ruudschuurmans.nl",
+      "contributions": [
+        "maintenance"
+      ]
+    },
+    {
+      "login": "jgile",
+      "name": "John Gile",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/3780633?v=4",
+      "profile": "https://github.com/jgile",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "jasonlbeggs",
+      "name": "Jason Beggs",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/25065083?v=4",
+      "profile": "https://jasonlbeggs.com",
+      "contributions": [
+        "maintenance"
       ]
     }
   ],
